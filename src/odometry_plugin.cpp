@@ -49,9 +49,9 @@ void OdometryPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   if (link_ == NULL)
     gzthrow("[gazebo_odometry_plugin] Couldn't find specified link \"" << link_name_ << "\".");
 
-  getSdfParam<std::string>(_sdf, "transform_topic", transform_pub_topic_, "transform");
-  getSdfParam<std::string>(_sdf, "odometry_topic", odometry_pub_topic_, "odometry");
-  getSdfParam<std::string>(_sdf, "frame_id", parent_frame_id_, "world");
+  transform_pub_topic_ = nh_->param<std::string>("transform_topic", transform_pub_topic_, "transform");
+  odometry_pub_topic_ = nh_->param<std::string>("odometry_topic", odometry_pub_topic_, "odometry");
+  parent_frame_id_ = nh_->param<std::string>("frame_id", parent_frame_id_, "world");
 
   parent_link_ = world_->GetEntity(parent_frame_id_);
   if (parent_link_ == NULL && parent_frame_id_ != "world") {
@@ -155,4 +155,3 @@ void OdometryPlugin::OnUpdate(const common::UpdateInfo& _info) {
 
 GZ_REGISTER_MODEL_PLUGIN(OdometryPlugin);
 }
-

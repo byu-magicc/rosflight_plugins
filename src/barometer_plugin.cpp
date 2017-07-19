@@ -53,10 +53,10 @@ void AltimeterPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   frame_id_ = link_name_;
 
   // load params from xacro
-  getSdfParam<std::string>(_sdf, "messageTopic", message_topic_, "baro");
-  getSdfParam<double>(_sdf, "noiseStdev", error_stdev_, 0.10);
-  getSdfParam<double>(_sdf, "publishRate", pub_rate_, 50.0);
-  getSdfParam<bool>(_sdf, "noiseOn", noise_on_, true);
+  message_topic_ = nh_->param<std::string>("messageTopic", message_topic_, "baro/data");
+  error_stdev_ = nh_->param<double>("noiseStdev", error_stdev_, 0.10);
+  pub_rate_ = nh_->param<double>("publishRate", pub_rate_, 50.0);
+  noise_on_ = nh_->param<bool>("noiseOn", noise_on_, true);
   last_time_ = world_->GetSimTime();
 
   // Configure ROS Integration

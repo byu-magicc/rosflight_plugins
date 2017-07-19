@@ -4,38 +4,17 @@
   <!-- Macro to add an IMU. -->
   <xacro:macro name="imu_plugin_macro"
     params="
-      namespace 
-      parent_link 
-      update_rate 
-      imu_topic
-      gyro_stdev 
-      gyro_bias_range 
-      gyro_bias_walk_stdev 
-      acc_stdev 
-      acc_bias_range
-      acc_bias_walk_stdev
+      namespace
+      parent_link
       ">
 
     <gazebo>
       <plugin filename="libimu_plugin.so" name="${namespace}_imu">
         <namespace>${namespace}</namespace>
         <link_name>${parent_link}</link_name>
-        <update_rate>${update_rate}</update_rate>
-        <imu_topic>${imu_topic}/data</imu_topic>
-        <acc_bias_topic>${imu_topic}/acc_bias</acc_bias_topic>
-        <gyro_bias_topic>${imu_topic}/gyro_bias</gyro_bias_topic>
-        <gyro_stdev>${gyro_stdev}</gyro_stdev>
-        <gyro_bias_range>${gyro_bias_range}</gyro_bias_range>
-        <gyro_bias_walk_stdev>${gyro_bias_walk_stdev}</gyro_bias_walk_stdev>
-        <acc_stdev>${acc_stdev}</acc_stdev>
-        <acc_bias_range>${acc_bias_range}</acc_bias_range>
-        <acc_bias_walk_stdev>${acc_bias_walk_stdev}</acc_bias_walk_stdev>
       </plugin>
     </gazebo>
 
   </xacro:macro>
-
-
-
 
 </robot>

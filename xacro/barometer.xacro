@@ -4,22 +4,14 @@
   <!-- Macro to add an altimeter. -->
   <xacro:macro name="barometer_plugin_macro"
     params="
-      namespace 
+      namespace
       parent_link 
-      baro_topic
-      noise_stdev 
-      update_rate 
-      noise_on
       ">
 
     <gazebo>
       <plugin filename="libbarometer_plugin.so" name="${namespace}_barometer">
         <namespace>${namespace}</namespace>
         <linkName>${parent_link}</linkName>
-        <messageTopic>${baro_topic}</messageTopic>
-        <noiseStdev>${noise_stdev}</noiseStdev>
-        <publishRate>${update_rate}</publishRate>
-        <noiseOn>${noise_on}</noiseOn>
       </plugin>
     </gazebo>
 

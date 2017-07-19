@@ -6,26 +6,12 @@
     params="
       namespace
       parent_link
-      mag_topic
-      noise_sigma
-      bias_sigma
-      pub_rate
-      declination
-      inclination
-      *inertia
-      *origin
       ">
 
     <gazebo>
       <plugin filename="libmagnetometer_plugin.so" name="${namespace}_magnetometer">
         <namespace>${namespace}</namespace>
         <linkName>${parent_link}</linkName>
-        <mag_topic>${mag_topic}</mag_topic>
-        <noise_sigma>${noise_sigma}</noise_sigma>
-        <bias_sigma>${bias_sigma}</bias_sigma>
-        <pub_rate>${pub_rate}</pub_rate>
-        <declination>${declination}</declination>
-        <inclination>${inclination}</inclination>
       </plugin>
     </gazebo>
 

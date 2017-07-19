@@ -17,14 +17,14 @@
 #include "rosflight_plugins/GPS_plugin.h"
 
 
-namespace gazebo 
+namespace gazebo
 {
 
 
 GPSPlugin::GPSPlugin() : ModelPlugin() {}
 
 
-GPSPlugin::~GPSPlugin() 
+GPSPlugin::~GPSPlugin()
 {
   event::Events::DisconnectWorldUpdateBegin(updateConnection_);
   if (nh_) {
@@ -34,7 +34,7 @@ GPSPlugin::~GPSPlugin()
 }
 
 
-void GPSPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) 
+void GPSPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 {
   // Store the pointer to the model
   model_ = _model;
@@ -60,18 +60,18 @@ void GPSPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   frame_id_ = link_name_;
 
   int numSat;
-  getSdfParam<std::string>(_sdf, "GPSTopic", GPS_topic_, "gps/data");
-  getSdfParam<double>(_sdf, "north_stdev", north_stdev_, 0.21);
-  getSdfParam<double>(_sdf, "east_stdev", east_stdev_, 0.21);
-  getSdfParam<double>(_sdf, "alt_stdev", alt_stdev_, 0.40);
-  getSdfParam<double>(_sdf, "north_k_GPS", north_k_GPS_, 1.0/1100.0);
-  getSdfParam<double>(_sdf, "east_k_GPS", east_k_GPS_, 1.0/1100.0);
-  getSdfParam<double>(_sdf, "alt_k_GPS", alt_k_GPS_, 1.0/1100.0);
-  getSdfParam<double>(_sdf, "sampleTime", sample_time_, 1.0);
-  getSdfParam<double>(_sdf, "initialLatitude", initial_latitude_, 1.0);
-  getSdfParam<double>(_sdf, "initialLongitude", initial_longitude_, 1.0);
-  getSdfParam<double>(_sdf, "initialAltitude", initial_altitude_, 1.0);
-  getSdfParam<int>(_sdf, "numSat", numSat, 7);
+  GPS_topic_ = nh_->param<std::string>("GPSTopic", GPS_topic_, "gps/data");
+  north_stdev_ = nh_->param<double>("north_stdev", north_stdev_, 0.21);
+  east_stdev_ = nh_->param<double>("east_stdev", east_stdev_, 0.21);
+  alt_stdev_ = nh_->param<double>("alt_stdev", alt_stdev_, 0.40);
+  north_k_GPS_ = nh_->param<double>("north_k_GPS", north_k_GPS_, 1.0/1100.0);
+  east_k_GPS_ = nh_->param<double>("east_k_GPS", east_k_GPS_, 1.0/1100.0);
+  alt_k_GPS_ = nh_->param<double>("alt_k_GPS", alt_k_GPS_, 1.0/1100.0);
+  sample_time_ = nh_->param<double>("sampleTime", sample_time_, 1.0);
+  initial_latitude_ = nh_->param<double>("initialLatitude", initial_latitude_, 1.0);
+  initial_longitude_ = nh_->param<double>("initialLongitude", initial_longitude_, 1.0);
+  initial_altitude_ = nh_->param<double>("initialAltitude", initial_altitude_, 1.0);
+  numSat = nh_->param<int>("numSat", numSat, 7);
 
   last_time_ = world_->GetSimTime();
 
@@ -95,7 +95,7 @@ void GPSPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 }
 
 // This gets called by the world update start event.
-void GPSPlugin::OnUpdate(const common::UpdateInfo& _info) 
+void GPSPlugin::OnUpdate(const common::UpdateInfo& _info)
 {
 
   // check if time to publish

@@ -4,27 +4,15 @@
     <!-- Macro to add an Airspeed. -->
   <xacro:macro name="airspeed_plugin_macro"
     params="
-      namespace 
-      parent_link 
-      airspeed_topic 
-      pressure_bias 
-      pressure_noise_sigma 
-      air_density 
-      max_pressure 
-      min_pressure
+      namespace
+      parent_link
       ">
-      
+
     <!-- Load Plugin -->
     <gazebo>
       <plugin filename="libairspeed_plugin.so" name="${namespace}_airspeed_sensor">
         <namespace>${namespace}</namespace>
         <linkName>${parent_link}</linkName>
-        <airspeedTopic>${airspeed_topic}</airspeedTopic>
-        <pressureBias>${pressure_bias}</pressureBias> <!-- [Pascals] -->
-        <pressureNoiseSigma>${pressure_noise_sigma}</pressureNoiseSigma> <!-- [Pascals] -->
-        <airDensity>${air_density}</airDensity> <!-- [kg/m^3] -->
-        <maxPressure>${max_pressure}</maxPressure> <!-- [Pascals] -->
-        <minPressure>${min_pressure}</minPressure> <!-- [Pascals] -->
       </plugin>
     </gazebo>
 
