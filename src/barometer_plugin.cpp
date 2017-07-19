@@ -20,13 +20,13 @@ namespace gazebo {
 
 AltimeterPlugin::AltimeterPlugin()
     : ModelPlugin(),
-      node_handle_(0){}
+      nh_(0){}
 
 AltimeterPlugin::~AltimeterPlugin() {
   event::Events::DisconnectWorldUpdateBegin(updateConnection_);
-  if (node_handle_) {
-    node_handle_->shutdown();
-    delete node_handle_;
+  if (nh_) {
+    nh_->shutdown();
+    delete nh_;
   }
 }
 
@@ -60,8 +60,8 @@ void AltimeterPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   last_time_ = world_->GetSimTime();
 
   // Configure ROS Integration
-  node_handle_ = new ros::NodeHandle(namespace_);
-  alt_pub_ = node_handle_->advertise<rosflight_msgs::Barometer>(message_topic_, 10);
+  nh_ = new ros::NodeHandle(namespace_);
+  alt_pub_ = nh_->advertise<rosflight_msgs::Barometer>(message_topic_, 10);
 
   // Configure Noise
   random_generator_= std::default_random_engine(std::chrono::system_clock::now().time_since_epoch().count());

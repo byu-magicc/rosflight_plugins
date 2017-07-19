@@ -52,7 +52,7 @@ class AltimeterPlugin : public ModelPlugin {
  private:
   // Ros Stuff
   std::string namespace_;
-  ros::NodeHandle* node_handle_;
+  ros::NodeHandle* nh_;
   ros::Publisher alt_pub_;
 
   // Topic

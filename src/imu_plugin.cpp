@@ -29,7 +29,7 @@ ImuPlugin::ImuPlugin() :
 ImuPlugin::~ImuPlugin()
 {
   event::Events::DisconnectWorldUpdateBegin(updateConnection_);
-  nh_.shutdown();
+  nh_->shutdown();
 }
 
 
@@ -45,7 +45,7 @@ void ImuPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
     namespace_ = _sdf->GetElement("namespace")->Get<std::string>();
   else
     gzerr << "[gazebo_imu_plugin] Please specify a namespace.\n";
-  nh_ = ros::NodeHandle(namespace_);
+  nh_ = new ros::NodeHandle(namespace_);
 
   if (_sdf->HasElement("link_name"))
     link_name_ = _sdf->GetElement("link_name")->Get<std::string>();
@@ -79,9 +79,9 @@ void ImuPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   this->updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&ImuPlugin::OnUpdate, this, _1));
 
   // Set up the publishers
-  imu_pub_ = nh_.advertise<sensor_msgs::Imu>(imu_topic_, 10);
-  gyro_bias_pub_ = nh_.advertise<geometry_msgs::Vector3Stamped>(gyro_bias_topic_, 10);
-  acc_bias_pub_ = nh_.advertise<geometry_msgs::Vector3Stamped>(acc_bias_topic_, 10);
+  imu_pub_ = nh_->advertise<sensor_msgs::Imu>(imu_topic_, 10);
+  gyro_bias_pub_ = nh_->advertise<geometry_msgs::Vector3Stamped>(gyro_bias_topic_, 10);
+  acc_bias_pub_ = nh_->advertise<geometry_msgs::Vector3Stamped>(acc_bias_topic_, 10);
 
   // Set up static members of IMU message
   imu_message_.header.frame_id = link_name_;

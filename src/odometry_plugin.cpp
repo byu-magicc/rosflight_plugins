@@ -21,9 +21,9 @@ namespace gazebo {
 
 OdometryPlugin::~OdometryPlugin() {
   event::Events::DisconnectWorldUpdateBegin(updateConnection_);
-  if (node_handle_) {
-    node_handle_->shutdown();
-    delete node_handle_;
+  if (nh_) {
+    nh_->shutdown();
+    delete nh_;
   }
 }
 
@@ -39,7 +39,7 @@ void OdometryPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
     namespace_ = _sdf->GetElement("namespace")->Get<std::string>();
   else
     gzerr << "[gazebo_odometry_plugin] Please specify a namespace.\n";
-  node_handle_ = new ros::NodeHandle(namespace_);
+  nh_ = new ros::NodeHandle(namespace_);
 
   if (_sdf->HasElement("parent_link"))
     link_name_ = _sdf->GetElement("parent_link")->Get<std::string>();
@@ -59,11 +59,11 @@ void OdometryPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   }
 
   updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&OdometryPlugin::OnUpdate, this, _1));
-  transform_NED_pub_ = node_handle_->advertise<geometry_msgs::TransformStamped>(transform_pub_topic_ + "/NED", 10);
-  transform_NWU_pub_ = node_handle_->advertise<geometry_msgs::TransformStamped>(transform_pub_topic_ + "/NWU", 10);
-  odometry_NED_pub_ = node_handle_->advertise<nav_msgs::Odometry>(odometry_pub_topic_ + "/NED", 10);
-  odometry_NWU_pub_ = node_handle_->advertise<nav_msgs::Odometry>(odometry_pub_topic_+ "/NWU", 10);
-  euler_pub_ = node_handle_->advertise<geometry_msgs::Vector3Stamped>("euler", 1);
+  transform_NED_pub_ = nh_->advertise<geometry_msgs::TransformStamped>(transform_pub_topic_ + "/NED", 10);
+  transform_NWU_pub_ = nh_->advertise<geometry_msgs::TransformStamped>(transform_pub_topic_ + "/NWU", 10);
+  odometry_NED_pub_ = nh_->advertise<nav_msgs::Odometry>(odometry_pub_topic_ + "/NED", 10);
+  odometry_NWU_pub_ = nh_->advertise<nav_msgs::Odometry>(odometry_pub_topic_+ "/NWU", 10);
+  euler_pub_ = nh_->advertise<geometry_msgs::Vector3Stamped>("euler", 1);
 }
 
 // This gets called by the world update start event.
