@@ -41,6 +41,8 @@ void AltimeterPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     namespace_ = _sdf->GetElement("namespace")->Get<std::string>();
   else
     gzerr << "[barometer_plugin] Please specify a namespace.\n";
+  nh_ = new ros::NodeHandle(namespace_);
+  
   if (_sdf->HasElement("linkName"))
     link_name_ = _sdf->GetElement("linkName")->Get<std::string>();
   else
@@ -60,7 +62,6 @@ void AltimeterPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   last_time_ = world_->GetSimTime();
 
   // Configure ROS Integration
-  nh_ = new ros::NodeHandle(namespace_);
   alt_pub_ = nh_->advertise<rosflight_msgs::Barometer>(message_topic_, 10);
 
   // Configure Noise
