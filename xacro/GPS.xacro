@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- Macro to add a GPS module. -->
+  <xacro:macro name="gps_plugin_macro"
+    params="
+      namespace 
+      parent_link 
+      gps_topic
+      north_stdev 
+      east_stdev 
+      alt_stdev
+      north_k_GPS 
+      east_k_GPS 
+      alt_k_GPS
+      initial_latitude 
+      initial_longitude 
+      initial_altitude
+      sample_time 
+      mass_gps_sensor
+      *inertia 
+      *origin
+      ">
+
+    <!-- Load Plugin -->
+    <gazebo>
+      <plugin filename="libGPS_plugin.so" name="${namespace}_GPS">
+        <namespace>${namespace}</namespace>
+        <linkName>${parent_link}</linkName>
+        <GPSTopic>${gps_topic}</GPSTopic>
+        <north_stdev>${north_stdev}</north_stdev>
+        <east_stdev>${east_stdev}</east_stdev>
+        <alt_stdev>${alt_stdev}</alt_stdev>
+        <north_k_GPS>${north_k_GPS}</north_k_GPS>
+        <east_k_GPS>${east_k_GPS}</east_k_GPS>
+        <alt_k_GPS>${alt_k_GPS}</alt_k_GPS>
+        <sampleTime>${sample_time}</sampleTime>
+        <initialLatitude>${initial_latitude}</initialLatitude>
+        <initialLongitude>${initial_longitude}</initialLongitude>
+        <initialAltitude>${initial_altitude}</initialAltitude>
+      </plugin>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>

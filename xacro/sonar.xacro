@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- Macro to add an sonar. -->
+  <xacro:macro
+    name="sonar_plugin_macro"
+    params="
+      namespace
+      parent_link
+      sonar_topic
+      mass
+      min_range
+      max_range
+      resolution
+      noise
+      field_of_view
+      update_rate
+      *inertia
+      *origin
+      ">
+
+    <!-- sonar link -->
+    <link name="${namespace}/sonar_link">
+      <inertial>
+        <mass value="${mass}"/>
+        <xacro:insert_block name="origin"/>
+        <xacro:insert_block name="inertia"/>
+      </inertial>
+    </link> 
+
+    <!-- sonar joint -->
+    <joint name="${namespace}/sonar_joint" type="fixed">
+      <xacro:insert_block name="origin"/>
+      <parent link="${parent_link}"/>
+      <child link="${namespace}/sonar_link"/>
+      <limit upper="0" lower="0" effort="0" velocity="0"/>
+    </joint>
+
+    <!-- attach a sonar -->
+    <gazebo reference="${namespace}/sonar_link">
+      <sensor type="ray" name="${namespace}/sonar">
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>10</samples>
+              <resolution>${resolution}</resolution>
+              <min_angle>${-field_of_view / 2.0}</min_angle>
+              <max_angle>${field_of_view / 2.0}</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>10</samples>
+              <resolution>${resolution}</resolution>
+              <min_angle>${-field_of_view / 2.0}</min_angle>
+              <max_angle>${field_of_view / 2.0}</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>${min_range}</min>
+            <max>${max_range}</max>
+            <resolution>${resolution}</resolution>
+          </range>
+        </ray>
+      
+        <!-- load range plugin -->
+        <plugin filename="libgazebo_ros_range.so" name="${namespace}_sonar">
+          <robotNamespace>${namespace}</robotNamespace>
+          <gaussianNoise>${noise}</gaussianNoise>
+          <updateRate>${update_rate}</updateRate>
+          <topicName>${sonar_topic}</topicName>
+          <frameName>/sonar_link</frameName>
+          <fov>${field_of_view}</fov>
+          <radiation>ultrasound</radiation>
+        </plugin>
+      </sensor>
+    </gazebo>
+    
+  </xacro:macro>
+
+</robot>
