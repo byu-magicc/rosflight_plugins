@@ -60,17 +60,17 @@ void GPSPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   frame_id_ = link_name_;
 
   int numSat;
-  GPS_topic_ = nh_->param<std::string>("GPSTopic", GPS_topic_, "gps/data");
-  north_stdev_ = nh_->param<double>("north_stdev", north_stdev_, 0.21);
-  east_stdev_ = nh_->param<double>("east_stdev", east_stdev_, 0.21);
-  alt_stdev_ = nh_->param<double>("alt_stdev", alt_stdev_, 0.40);
-  north_k_GPS_ = nh_->param<double>("north_k_GPS", north_k_GPS_, 1.0/1100.0);
-  east_k_GPS_ = nh_->param<double>("east_k_GPS", east_k_GPS_, 1.0/1100.0);
-  alt_k_GPS_ = nh_->param<double>("alt_k_GPS", alt_k_GPS_, 1.0/1100.0);
-  sample_time_ = nh_->param<double>("sampleTime", sample_time_, 1.0);
-  initial_latitude_ = nh_->param<double>("initialLatitude", initial_latitude_, 1.0);
-  initial_longitude_ = nh_->param<double>("initialLongitude", initial_longitude_, 1.0);
-  initial_altitude_ = nh_->param<double>("initialAltitude", initial_altitude_, 1.0);
+  GPS_topic_ = nh_->param<std::string>("GPSTopic", "gps/data");
+  north_stdev_ = nh_->param<double>("north_stdev", 0.21);
+  east_stdev_ = nh_->param<double>("east_stdev", 0.21);
+  alt_stdev_ = nh_->param<double>("alt_stdev", 0.40);
+  north_k_GPS_ = nh_->param<double>("north_k_GPS", 1.0/1100.0);
+  east_k_GPS_ = nh_->param<double>("east_k_GPS", 1.0/1100.0);
+  alt_k_GPS_ = nh_->param<double>("alt_k_GPS", 1.0/1100.0);
+  sample_time_ = nh_->param<double>("sampleTime", 1.0);
+  initial_latitude_ = nh_->param<double>("initialLatitude", 1.0);
+  initial_longitude_ = nh_->param<double>("initialLongitude", 1.0);
+  initial_altitude_ = nh_->param<double>("initialAltitude", 1.0);
   numSat = nh_->param<int>("numSat", numSat, 7);
 
   last_time_ = world_->GetSimTime();

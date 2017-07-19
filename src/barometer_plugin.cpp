@@ -42,7 +42,7 @@ void AltimeterPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   else
     gzerr << "[barometer_plugin] Please specify a namespace.\n";
   nh_ = new ros::NodeHandle(namespace_);
-  
+
   if (_sdf->HasElement("linkName"))
     link_name_ = _sdf->GetElement("linkName")->Get<std::string>();
   else
@@ -55,10 +55,10 @@ void AltimeterPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   frame_id_ = link_name_;
 
   // load params from xacro
-  message_topic_ = nh_->param<std::string>("messageTopic", message_topic_, "baro/data");
-  error_stdev_ = nh_->param<double>("noiseStdev", error_stdev_, 0.10);
-  pub_rate_ = nh_->param<double>("publishRate", pub_rate_, 50.0);
-  noise_on_ = nh_->param<bool>("noiseOn", noise_on_, true);
+  message_topic_ = nh_->param<std::string>("messageTopic", "baro/data");
+  error_stdev_ = nh_->param<double>("noiseStdev", 0.10);
+  pub_rate_ = nh_->param<double>("publishRate", 50.0);
+  noise_on_ = nh_->param<bool>("noiseOn", true);
   last_time_ = world_->GetSimTime();
 
   // Configure ROS Integration

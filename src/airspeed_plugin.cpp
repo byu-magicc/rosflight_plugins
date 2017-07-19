@@ -63,12 +63,12 @@ void AirspeedPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
 
   frame_id_ = link_name_;
 
-  airspeed_topic_ = nh_->param<std::string>("airspeedTopic", airspeed_topic_, "airspeed/data");
-  pressure_bias_ = nh_->param<double>("pressureBias", pressure_bias_, 0);
-  pressure_noise_sigma_ = nh_->param<double>("pressureNoiseSigma", pressure_noise_sigma_,10);
-  rho_ = nh_->param<double>("airDensity", rho_, 1.225);
-  max_pressure_ = nh_->param<double>("maxPressure", max_pressure_, 4000.0);
-  min_pressure_ = nh_->param<double>("minPressure", min_pressure_, 0.0);
+  airspeed_topic_ = nh_->param<std::string>("airspeedTopic", "airspeed/data");
+  pressure_bias_ = nh_->param<double>("pressureBias", 0);
+  pressure_noise_sigma_ = nh_->param<double>("pressureNoiseSigma", 0);
+  rho_ = nh_->param<double>("airDensity", 1.225);
+  max_pressure_ = nh_->param<double>("maxPressure", 4000.0);
+  min_pressure_ = nh_->param<double>("minPressure", 0.0);
 
 
   last_time_ = world_->GetSimTime();

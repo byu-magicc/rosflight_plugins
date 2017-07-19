@@ -53,13 +53,13 @@ void MagnetometerPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   frame_id_ = link_name_;
   next_pub_time_ = world_->GetSimTime().Double();
 
-  namespace_ = nh_->param<std::string>("namespace", namespace_, "~");
-  mag_topic_ = nh_->param<std::string>("mag_topic", mag_topic_, "gps/data");
-  noise_sigma_ = nh_->param<double>("noise_sigma", noise_sigma_, 0.21);
-  bias_range_ = nh_->param<double>("bias_sigma", bias_range_, 0.21);
-  pub_rate_ = nh_->param<double>("pub_rate", pub_rate_, 160.0);
-  declination_ = nh_->param<double>("declination", declination_, 160.0);
-  inclination_ = nh_->param<double>("inclination", inclination_, 160.0);
+  namespace_ = nh_->param<std::string>("namespace", "~");
+  mag_topic_ = nh_->param<std::string>("mag_topic", "gps/data");
+  noise_sigma_ = nh_->param<double>("noise_sigma", 0.21);
+  bias_range_ = nh_->param<double>("bias_sigma", 0.21);
+  pub_rate_ = nh_->param<double>("pub_rate", 160.0);
+  declination_ = nh_->param<double>("declination", 160.0);
+  inclination_ = nh_->param<double>("inclination", 160.0);
 
   // set up noise parameters
   normal_dist_ = std::normal_distribution<double>(0.0, 1.0);

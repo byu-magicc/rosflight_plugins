@@ -56,18 +56,18 @@ void ImuPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   if (link_ == NULL)
     gzthrow("[gazebo_imu_plugin] Couldn't find specified link \"" << link_name_ << "\".");
 
-  update_rate_ = nh_->param<double>("update_rate", update_rate_, 1000.0);
-  imu_topic_ = nh_->param<std::string>("imu_topic", imu_topic_, "imu/data");
-  acc_bias_topic_ = nh_->param<std::string>("acc_bias_topic", acc_bias_topic_, "imu/acc_bias");
-  gyro_bias_topic_ = nh_->param<std::string>("gyro_bias_topic", gyro_bias_topic_, "imu/gyro_bias");
+  update_rate_ = nh_->param<double>("update_rate", 1000.0);
+  imu_topic_ = nh_->param<std::string>("imu_topic", "imu/data");
+  acc_bias_topic_ = nh_->param<std::string>("acc_bias_topic", "imu/acc_bias");
+  gyro_bias_topic_ = nh_->param<std::string>("gyro_bias_topic", "imu/gyro_bias");
 
-  gyro_stdev_ = nh_->param<double>("gyro_stdev", gyro_stdev_, 0.13);
-  gyro_bias_range_ = nh_->param<double>("gyro_bias_range", gyro_bias_range_, 0.15);
-  gyro_bias_walk_stdev_ = nh_->param<double>("gyro_bias_walk_stdev", gyro_bias_walk_stdev_, 0.001);
+  gyro_stdev_ = nh_->param<double>("gyro_stdev", 0.13);
+  gyro_bias_range_ = nh_->param<double>("gyro_bias_range", 0.15);
+  gyro_bias_walk_stdev_ = nh_->param<double>("gyro_bias_walk_stdev", 0.001);
 
-  acc_stdev_ = nh_->param<double>("acc_stdev", acc_stdev_, 1.15);
-  acc_bias_range_ = nh_->param<double>("acc_bias_range", acc_bias_range_, 0.15);
-  acc_bias_walk_stdev_ = nh_->param<double>("acc_bias_walk_stdev", acc_bias_walk_stdev_, 0.001);
+  acc_stdev_ = nh_->param<double>("acc_stdev", 1.15);
+  acc_bias_range_ = nh_->param<double>("acc_bias_range", 0.15);
+  acc_bias_walk_stdev_ = nh_->param<double>("acc_bias_walk_stdev", 0.001);
 
   // Initialize some parts of the plugin
   last_time_ = world_->GetSimTime();
