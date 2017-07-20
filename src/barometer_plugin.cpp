@@ -55,10 +55,10 @@ void AltimeterPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   frame_id_ = link_name_;
 
   // load params from xacro
-  message_topic_ = nh_->param<std::string>("messageTopic", "baro/data");
-  error_stdev_ = nh_->param<double>("noiseStdev", 0.10);
-  pub_rate_ = nh_->param<double>("publishRate", 50.0);
-  noise_on_ = nh_->param<bool>("noiseOn", true);
+  message_topic_ = nh_->param<std::string>("baro_topic", "baro/data");
+  error_stdev_ = nh_->param<double>("baro_stdev", 0.10);
+  pub_rate_ = nh_->param<double>("baro_rate", 50.0);
+  noise_on_ = nh_->param<bool>("baro_noise_on", true);
   last_time_ = world_->GetSimTime();
 
   // Configure ROS Integration
@@ -74,7 +74,7 @@ void AltimeterPlugin::OnUpdate(const common::UpdateInfo& _info)
 {
   // check if time to publish
   common::Time current_time  = world_->GetSimTime();
-  if((current_time - last_time_).Double() > 1.0/pub_rate_){
+  if((current_time - last_time_).Double() >= 1.0/pub_rate_){
 
     // pull z measurement out of Gazebo
     math::Pose current_state_LFU = link_->GetWorldPose();
@@ -94,6 +94,9 @@ void AltimeterPlugin::OnUpdate(const common::UpdateInfo& _info)
     // publish message
     message.header.stamp.fromSec(world_->GetSimTime().Double());
     alt_pub_.publish(message);
+
+    // save current time
+    last_time_ = current_time;
   }
 }
 

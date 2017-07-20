@@ -60,9 +60,10 @@ class GPSPlugin : public ModelPlugin
   std::string GPS_topic_;
   ros::NodeHandle* nh_;
   ros::Publisher GPS_pub_;
-  double pub_rate_;
+  double update_rate_;
   std::string frame_id_;
   std::string link_name_;
+  bool noise_on_;
 
   std::default_random_engine random_generator_;
   std::normal_distribution<double> standard_normal_distribution_;
@@ -74,6 +75,7 @@ class GPSPlugin : public ModelPlugin
   event::ConnectionPtr updateConnection_;
 
   common::Time last_time_;
+  double next_pub_time_;
 
   // Wind Connection
   struct Wind{ double N;  double E;  double D; } wind_;

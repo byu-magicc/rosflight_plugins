@@ -1,6 +1,26 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
+  <!-- LV-MaxSonar-EZ3 MB1030 -->
+  <xacro:macro
+    name="Sonar_MB1030"
+    params="namespace parent_link sonar_topic *origin">
+    <xacro:sonar_plugin_macro
+      namespace="${namespace}"
+      parent_link="${parent_link}"
+      sonar_topic="${sonar_topic}"
+      mass="0.0043"
+      min_range="0.381"
+      max_range="6.45"
+      noise="0.10"
+      resolution="0.10"
+      field_of_view="1.107"
+      update_rate="40">
+      <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001" />
+      <xacro:insert_block name="origin"/>
+    </xacro:sonar_plugin_macro>
+  </xacro:macro>
+
   <!-- Macro to add an sonar. -->
   <xacro:macro
     name="sonar_plugin_macro"

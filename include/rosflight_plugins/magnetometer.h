@@ -62,6 +62,7 @@ class MagnetometerPlugin : public ModelPlugin {
   double next_pub_time_;
 
   // True Values
+  bool noise_on_;
   double inclination_;
   double declination_;
 

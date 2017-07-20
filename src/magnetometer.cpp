@@ -53,13 +53,13 @@ void MagnetometerPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   frame_id_ = link_name_;
   next_pub_time_ = world_->GetSimTime().Double();
 
-  namespace_ = nh_->param<std::string>("namespace", "~");
-  mag_topic_ = nh_->param<std::string>("mag_topic", "gps/data");
-  noise_sigma_ = nh_->param<double>("noise_sigma", 0.21);
-  bias_range_ = nh_->param<double>("bias_sigma", 0.21);
-  pub_rate_ = nh_->param<double>("pub_rate", 160.0);
-  declination_ = nh_->param<double>("declination", 160.0);
-  inclination_ = nh_->param<double>("inclination", 160.0);
+  noise_on_ = nh_->param<bool>("mag_noise_on", true);
+  mag_topic_ = nh_->param<std::string>("mag_topic", "mag/data");
+  noise_sigma_ = nh_->param<double>("mag_stdev", 0.01);
+  bias_range_ = nh_->param<double>("mag_bias_range", 0.01);
+  pub_rate_ = nh_->param<double>("mag_rate", 50.0);
+  declination_ = nh_->param<double>("mag_declination", 0.198584539676); // default to Provo, UT
+  inclination_ = nh_->param<double>("mag_inclination", 1.14316156541); // default to Provo, UT
 
   // set up noise parameters
   normal_dist_ = std::normal_distribution<double>(0.0, 1.0);
@@ -79,14 +79,23 @@ void MagnetometerPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   // Set up ROS publisher
   mag_pub_ = nh_->advertise<sensor_msgs::MagneticField>(mag_topic_, 10);
 
+  // Listen to the update event. This event is broadcast every simulation iteration.
+  this->updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&MagnetometerPlugin::OnUpdate, this, _1));
+
+  // turn off noise and bias of noise_on is disabled
+  if (!noise_on_)
+  {
+    noise_sigma_ = 0;
+    bias_vector_.x = 0;
+    bias_vector_.y = 0;
+    bias_vector_.z = 0;
+  }
+
   // Fill in static members of message
   mag_msg_.header.frame_id = frame_id_;
   mag_msg_.header.seq = 0;
   for(int i = 0; i < 3; i++)
       mag_msg_.magnetic_field_covariance[i + 3*i] = noise_sigma_*noise_sigma_;
-
-  // Listen to the update event. This event is broadcast every simulation iteration.
-  this->updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&MagnetometerPlugin::OnUpdate, this, _1));
 }
 
 

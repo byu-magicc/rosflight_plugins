@@ -58,20 +58,22 @@ void GPSPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     gzthrow("[gazebo_imu_plugin] Couldn't find specified link \"" << link_name_ << "\".");
 
   frame_id_ = link_name_;
+  next_pub_time_ = world_->GetSimTime().Double();
 
   int numSat;
-  GPS_topic_ = nh_->param<std::string>("GPSTopic", "gps/data");
-  north_stdev_ = nh_->param<double>("north_stdev", 0.21);
-  east_stdev_ = nh_->param<double>("east_stdev", 0.21);
-  alt_stdev_ = nh_->param<double>("alt_stdev", 0.40);
-  north_k_GPS_ = nh_->param<double>("north_k_GPS", 1.0/1100.0);
-  east_k_GPS_ = nh_->param<double>("east_k_GPS", 1.0/1100.0);
-  alt_k_GPS_ = nh_->param<double>("alt_k_GPS", 1.0/1100.0);
-  sample_time_ = nh_->param<double>("sampleTime", 1.0);
-  initial_latitude_ = nh_->param<double>("initialLatitude", 1.0);
-  initial_longitude_ = nh_->param<double>("initialLongitude", 1.0);
-  initial_altitude_ = nh_->param<double>("initialAltitude", 1.0);
-  numSat = nh_->param<int>("numSat", numSat, 7);
+  noise_on_ = nh_->param<bool>("gps_noise_on", true);
+  GPS_topic_ = nh_->param<std::string>("gps_topic", "gps/data");
+  north_stdev_ = nh_->param<double>("gps_north_stdev", 0.21);
+  east_stdev_ = nh_->param<double>("gps_east_stdev", 0.21);
+  alt_stdev_ = nh_->param<double>("gps_alt_stdev", 0.40);
+  north_k_GPS_ = nh_->param<double>("gps_k_north", 1.0/1100.0);
+  east_k_GPS_ = nh_->param<double>("gps_k_east", 1.0/1100.0);
+  alt_k_GPS_ = nh_->param<double>("gps_k_alt", 1.0/1100.0);
+  update_rate_ = nh_->param<double>("gps_rate", 10.0);
+  initial_latitude_ = nh_->param<double>("gps_initial_latitude", 40.267320); // default to Provo, UT
+  initial_longitude_ = nh_->param<double>("gps_initial_longitude", -111.635629); // default to Provo, UT
+  initial_altitude_ = nh_->param<double>("gps_initial_altitude", 1387.0); // default to Provo, UT
+  numSat = nh_->param<int>("gps_num_sats", numSat, 7);
 
   last_time_ = world_->GetSimTime();
 
@@ -79,7 +81,7 @@ void GPSPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   this->updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&GPSPlugin::OnUpdate, this, _1));
 
   GPS_pub_ = nh_->advertise<rosflight_msgs::GPS>(GPS_topic_, 1);
-  pub_rate_ = 1.0/sample_time_;
+  sample_time_ = 1.0/update_rate_;
 
   // Fill static members of airspeed message.
   GPS_message_.header.frame_id = frame_id_;
@@ -91,7 +93,17 @@ void GPSPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   north_GPS_error_ = 0.0;
   east_GPS_error_ = 0.0;
   alt_GPS_error_ = 0.0;
-//  gzerr << " finished GPS initializaiton \n" ;
+
+  // disable noise if needed
+  if (!noise_on_)
+  {
+    north_stdev_ = 0;
+    east_stdev_ = 0;
+    alt_stdev_ = 0;
+    north_k_GPS_ = 0;
+    east_k_GPS_ = 0;
+    alt_k_GPS_ = 0;
+  }
 }
 
 // This gets called by the world update start event.
@@ -99,8 +111,10 @@ void GPSPlugin::OnUpdate(const common::UpdateInfo& _info)
 {
 
   // check if time to publish
-  common::Time current_time  = world_->GetSimTime();
-  if((current_time - last_time_).Double() > 1.0/pub_rate_){
+  common::Time current_time  = world_->GetSimTime().Double();
+  if(current_time > next_pub_time_){
+
+      next_pub_time_ += sample_time_;
 
       // Add noise per Gauss-Markov Process (p. 139 UAV Book)
       double noise = north_stdev_*standard_normal_distribution_(random_generator_);

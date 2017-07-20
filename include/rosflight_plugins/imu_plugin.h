@@ -66,6 +66,7 @@ class ImuPlugin : public ModelPlugin {
   ros::Publisher acc_bias_pub_;
   ros::Publisher gyro_bias_pub_;
 
+  bool noise_on_;
   double update_rate_;
   double gyro_stdev_;
   double acc_stdev_;

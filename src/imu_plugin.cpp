@@ -56,7 +56,8 @@ void ImuPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   if (link_ == NULL)
     gzthrow("[gazebo_imu_plugin] Couldn't find specified link \"" << link_name_ << "\".");
 
-  update_rate_ = nh_->param<double>("update_rate", 1000.0);
+  noise_on_ = nh_->param<bool>("imu_noise_on", true);
+  update_rate_ = nh_->param<double>("imu_rate", 1000.0);
   imu_topic_ = nh_->param<std::string>("imu_topic", "imu/data");
   acc_bias_topic_ = nh_->param<std::string>("acc_bias_topic", "imu/acc_bias");
   gyro_bias_topic_ = nh_->param<std::string>("gyro_bias_topic", "imu/gyro_bias");
@@ -83,15 +84,6 @@ void ImuPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   gyro_bias_pub_ = nh_->advertise<geometry_msgs::Vector3Stamped>(gyro_bias_topic_, 10);
   acc_bias_pub_ = nh_->advertise<geometry_msgs::Vector3Stamped>(acc_bias_topic_, 10);
 
-  // Set up static members of IMU message
-  imu_message_.header.frame_id = link_name_;
-  imu_message_.angular_velocity_covariance[0] = gyro_stdev_*gyro_stdev_;
-  imu_message_.angular_velocity_covariance[4] = gyro_stdev_*gyro_stdev_;
-  imu_message_.angular_velocity_covariance[8] = gyro_stdev_*gyro_stdev_;
-  imu_message_.linear_acceleration_covariance[0] = acc_stdev_*acc_stdev_;
-  imu_message_.linear_acceleration_covariance[4] = acc_stdev_*acc_stdev_;
-  imu_message_.linear_acceleration_covariance[8] = acc_stdev_*acc_stdev_;
-
   // Initialize the Bias
   gyro_bias_.x = gyro_bias_range_*uniform_distribution_(random_generator_);
   gyro_bias_.y = gyro_bias_range_*uniform_distribution_(random_generator_);
@@ -102,6 +94,30 @@ void ImuPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
 
   // Get mass
   mass_ = link_->GetInertial()->GetMass();
+
+  // Turn off noise and bias if noise_on_ disabled
+  if (!noise_on_)
+  {
+    gyro_stdev_ = 0;
+    gyro_bias_walk_stdev_ = 0;
+    gyro_bias_.x = 0;
+    gyro_bias_.y = 0;
+    gyro_bias_.z = 0;
+    acc_stdev_ = 0;
+    acc_bias_walk_stdev_ = 0;
+    acc_bias_.x = 0;
+    acc_bias_.y = 0;
+    acc_bias_.z = 0;
+  }
+
+  // Set up static members of IMU message
+  imu_message_.header.frame_id = link_name_;
+  imu_message_.angular_velocity_covariance[0] = gyro_stdev_*gyro_stdev_;
+  imu_message_.angular_velocity_covariance[4] = gyro_stdev_*gyro_stdev_;
+  imu_message_.angular_velocity_covariance[8] = gyro_stdev_*gyro_stdev_;
+  imu_message_.linear_acceleration_covariance[0] = acc_stdev_*acc_stdev_;
+  imu_message_.linear_acceleration_covariance[4] = acc_stdev_*acc_stdev_;
+  imu_message_.linear_acceleration_covariance[8] = acc_stdev_*acc_stdev_;
 }
 
 void ImuPlugin::Reset()
