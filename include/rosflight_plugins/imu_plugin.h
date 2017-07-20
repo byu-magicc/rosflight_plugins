@@ -62,6 +62,7 @@ class ImuPlugin : public ModelPlugin {
   std::string link_name_;
 
   ros::NodeHandle* nh_;
+  ros::NodeHandle nh_private_;
   ros::Publisher imu_pub_;
   ros::Publisher acc_bias_pub_;
   ros::Publisher gyro_bias_pub_;

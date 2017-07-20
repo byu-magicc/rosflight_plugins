@@ -43,6 +43,7 @@ void MagnetometerPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   if (_sdf->HasElement("namespace"))
     namespace_ = _sdf->GetElement("namespace")->Get<std::string>();
   nh_ = new ros::NodeHandle(namespace_);
+  nh_private_ = ros::NodeHandle(namespace_ + "/magnetometer");
 
   if (_sdf->HasElement("linkName"))
     link_name_ = _sdf->GetElement("linkName")->Get<std::string>();
@@ -53,13 +54,13 @@ void MagnetometerPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   frame_id_ = link_name_;
   next_pub_time_ = world_->GetSimTime().Double();
 
-  noise_on_ = nh_->param<bool>("mag_noise_on", true);
-  mag_topic_ = nh_->param<std::string>("mag_topic", "mag/data");
-  noise_sigma_ = nh_->param<double>("mag_stdev", 0.01);
-  bias_range_ = nh_->param<double>("mag_bias_range", 0.01);
-  pub_rate_ = nh_->param<double>("mag_rate", 50.0);
-  declination_ = nh_->param<double>("mag_declination", 0.198584539676); // default to Provo, UT
-  inclination_ = nh_->param<double>("mag_inclination", 1.14316156541); // default to Provo, UT
+  noise_on_ = nh_private_.param<bool>("noise_on", true);
+  mag_topic_ = nh_private_.param<std::string>("topic", "mag/data");
+  noise_sigma_ = nh_private_.param<double>("stdev", 0.01);
+  bias_range_ = nh_private_.param<double>("bias_range", 0.01);
+  pub_rate_ = nh_private_.param<double>("rate", 50.0);
+  declination_ = nh_private_.param<double>("declination", 0.198584539676); // default to Provo, UT
+  inclination_ = nh_private_.param<double>("inclination", 1.14316156541); // default to Provo, UT
 
   // set up noise parameters
   normal_dist_ = std::normal_distribution<double>(0.0, 1.0);

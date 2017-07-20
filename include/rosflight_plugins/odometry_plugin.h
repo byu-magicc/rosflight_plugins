@@ -85,6 +85,7 @@ class OdometryPlugin : public ModelPlugin {
   int odometry_sequence_;
 
   ros::NodeHandle* nh_;
+  ros::NodeHandle nh_private_;
   ros::Publisher transform_NWU_pub_;
   ros::Publisher transform_NED_pub_;
   ros::Publisher odometry_NWU_pub_;

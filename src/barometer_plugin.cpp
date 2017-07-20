@@ -18,11 +18,11 @@
 
 namespace gazebo {
 
-AltimeterPlugin::AltimeterPlugin()
+BarometerPlugin::BarometerPlugin()
     : ModelPlugin(),
       nh_(0){}
 
-AltimeterPlugin::~AltimeterPlugin() {
+BarometerPlugin::~BarometerPlugin() {
   event::Events::DisconnectWorldUpdateBegin(updateConnection_);
   if (nh_) {
     nh_->shutdown();
@@ -31,7 +31,7 @@ AltimeterPlugin::~AltimeterPlugin() {
 }
 
 
-void AltimeterPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
+void BarometerPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 {
   // Configure Gazebo Integration
   model_ = _model;
@@ -42,6 +42,7 @@ void AltimeterPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   else
     gzerr << "[barometer_plugin] Please specify a namespace.\n";
   nh_ = new ros::NodeHandle(namespace_);
+  nh_private_ = ros::NodeHandle(namespace_ + "/barometer");
 
   if (_sdf->HasElement("linkName"))
     link_name_ = _sdf->GetElement("linkName")->Get<std::string>();
@@ -51,14 +52,14 @@ void AltimeterPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   if (link_ == NULL)
     gzthrow("[barometer_plugin] Couldn't find specified link \"" << link_name_ << "\".");
   // Connect to the Gazebo Update
-  this->updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&AltimeterPlugin::OnUpdate, this, _1));
+  this->updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&BarometerPlugin::OnUpdate, this, _1));
   frame_id_ = link_name_;
 
   // load params from xacro
-  message_topic_ = nh_->param<std::string>("baro_topic", "baro/data");
-  error_stdev_ = nh_->param<double>("baro_stdev", 0.10);
-  pub_rate_ = nh_->param<double>("baro_rate", 50.0);
-  noise_on_ = nh_->param<bool>("baro_noise_on", true);
+  message_topic_ = nh_private_.param<std::string>("topic", "baro/data");
+  error_stdev_ = nh_private_.param<double>("stdev", 0.10);
+  pub_rate_ = nh_private_.param<double>("rate", 50.0);
+  noise_on_ = nh_private_.param<bool>("noise_on", true);
   last_time_ = world_->GetSimTime();
 
   // Configure ROS Integration
@@ -70,7 +71,7 @@ void AltimeterPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 }
 
 
-void AltimeterPlugin::OnUpdate(const common::UpdateInfo& _info)
+void BarometerPlugin::OnUpdate(const common::UpdateInfo& _info)
 {
   // check if time to publish
   common::Time current_time  = world_->GetSimTime();
@@ -100,5 +101,5 @@ void AltimeterPlugin::OnUpdate(const common::UpdateInfo& _info)
   }
 }
 
-GZ_REGISTER_MODEL_PLUGIN(AltimeterPlugin);
+GZ_REGISTER_MODEL_PLUGIN(BarometerPlugin);
 }

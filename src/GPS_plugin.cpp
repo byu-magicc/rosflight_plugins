@@ -48,6 +48,7 @@ void GPSPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   else
     gzerr << "[gazebo_imu_plugin] Please specify a namespace.\n";
   nh_ = new ros::NodeHandle(namespace_);
+  nh_private_ = ros::NodeHandle(namespace_ + "/gps");
 
   if (_sdf->HasElement("linkName"))
     link_name_ = _sdf->GetElement("linkName")->Get<std::string>();
@@ -61,19 +62,19 @@ void GPSPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   next_pub_time_ = world_->GetSimTime().Double();
 
   int numSat;
-  noise_on_ = nh_->param<bool>("gps_noise_on", true);
-  GPS_topic_ = nh_->param<std::string>("gps_topic", "gps/data");
-  north_stdev_ = nh_->param<double>("gps_north_stdev", 0.21);
-  east_stdev_ = nh_->param<double>("gps_east_stdev", 0.21);
-  alt_stdev_ = nh_->param<double>("gps_alt_stdev", 0.40);
-  north_k_GPS_ = nh_->param<double>("gps_k_north", 1.0/1100.0);
-  east_k_GPS_ = nh_->param<double>("gps_k_east", 1.0/1100.0);
-  alt_k_GPS_ = nh_->param<double>("gps_k_alt", 1.0/1100.0);
-  update_rate_ = nh_->param<double>("gps_rate", 10.0);
-  initial_latitude_ = nh_->param<double>("gps_initial_latitude", 40.267320); // default to Provo, UT
-  initial_longitude_ = nh_->param<double>("gps_initial_longitude", -111.635629); // default to Provo, UT
-  initial_altitude_ = nh_->param<double>("gps_initial_altitude", 1387.0); // default to Provo, UT
-  numSat = nh_->param<int>("gps_num_sats", numSat, 7);
+  noise_on_ = nh_private_.param<bool>("noise_on", true);
+  GPS_topic_ = nh_private_.param<std::string>("topic", "gps/data");
+  north_stdev_ = nh_private_.param<double>("north_stdev", 0.21);
+  east_stdev_ = nh_private_.param<double>("east_stdev", 0.21);
+  alt_stdev_ = nh_private_.param<double>("alt_stdev", 0.40);
+  north_k_GPS_ = nh_private_.param<double>("k_north", 1.0/1100.0);
+  east_k_GPS_ = nh_private_.param<double>("k_east", 1.0/1100.0);
+  alt_k_GPS_ = nh_private_.param<double>("k_alt", 1.0/1100.0);
+  update_rate_ = nh_private_.param<double>("rate", 10.0);
+  initial_latitude_ = nh_private_.param<double>("initial_latitude", 40.267320); // default to Provo, UT
+  initial_longitude_ = nh_private_.param<double>("initial_longitude", -111.635629); // default to Provo, UT
+  initial_altitude_ = nh_private_.param<double>("initial_altitude", 1387.0); // default to Provo, UT
+  numSat = nh_private_.param<int>("num_sats", numSat, 7);
 
   last_time_ = world_->GetSimTime();
 

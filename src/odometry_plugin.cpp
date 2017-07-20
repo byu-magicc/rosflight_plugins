@@ -40,6 +40,7 @@ void OdometryPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   else
     gzerr << "[gazebo_odometry_plugin] Please specify a namespace.\n";
   nh_ = new ros::NodeHandle(namespace_);
+  nh_private_ = ros::NodeHandle(namespace_ + "/odometry");
 
   if (_sdf->HasElement("parent_link"))
     link_name_ = _sdf->GetElement("parent_link")->Get<std::string>();
@@ -49,9 +50,9 @@ void OdometryPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   if (link_ == NULL)
     gzthrow("[gazebo_odometry_plugin] Couldn't find specified link \"" << link_name_ << "\".");
 
-  transform_pub_topic_ = nh_->param<std::string>("transform_topic", "transform");
-  odometry_pub_topic_ = nh_->param<std::string>("odometry_topic", "odometry");
-  parent_frame_id_ = nh_->param<std::string>("frame_id", "world");
+  transform_pub_topic_ = nh_private_.param<std::string>("transform_topic", "transform");
+  odometry_pub_topic_ = nh_private_.param<std::string>("odometry_topic", "odometry");
+  parent_frame_id_ = nh_private_.param<std::string>("frame_id", "world");
 
   parent_link_ = world_->GetEntity(parent_frame_id_);
   if (parent_link_ == NULL && parent_frame_id_ != "world") {

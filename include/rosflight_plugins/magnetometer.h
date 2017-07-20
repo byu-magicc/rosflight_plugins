@@ -51,6 +51,7 @@ class MagnetometerPlugin : public ModelPlugin {
 
   // ROS connections
   ros::NodeHandle* nh_;
+  ros::NodeHandle nh_private_;
   ros::Publisher mag_pub_;
 
   // Publication Parameters

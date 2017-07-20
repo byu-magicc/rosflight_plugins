@@ -39,11 +39,11 @@
 
 namespace gazebo {
 
-class AltimeterPlugin : public ModelPlugin {
+class BarometerPlugin : public ModelPlugin {
  public:
 
-  AltimeterPlugin();
-  ~AltimeterPlugin();
+  BarometerPlugin();
+  ~BarometerPlugin();
 
  protected:
   void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
@@ -53,6 +53,7 @@ class AltimeterPlugin : public ModelPlugin {
   // Ros Stuff
   std::string namespace_;
   ros::NodeHandle* nh_;
+  ros::NodeHandle nh_private_;
   ros::Publisher alt_pub_;
 
   // Topic

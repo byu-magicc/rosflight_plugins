@@ -59,6 +59,7 @@ class GPSPlugin : public ModelPlugin
   std::string namespace_;
   std::string GPS_topic_;
   ros::NodeHandle* nh_;
+  ros::NodeHandle nh_private_;
   ros::Publisher GPS_pub_;
   double update_rate_;
   std::string frame_id_;
