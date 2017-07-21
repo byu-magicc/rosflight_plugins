@@ -16,49 +16,72 @@
 
 #include "rosflight_plugins/imu_plugin.h"
 
+namespace rosflight_plugins
+{
 
-using namespace std;
-
-namespace gazebo {
-
-ImuPlugin::ImuPlugin() :
-  ModelPlugin(),
-  prev_velocity_(0, 0, 0)
-{}
+ImuPlugin::ImuPlugin() : gazebo::ModelPlugin() { }
 
 ImuPlugin::~ImuPlugin()
 {
-  event::Events::DisconnectWorldUpdateBegin(updateConnection_);
-  nh_->shutdown();
+  gazebo::event::Events::DisconnectWorldUpdateBegin(updateConnection_);
+  nh_.shutdown();
 }
 
 
-void ImuPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
-  // Store the pointer to the model
+void ImuPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
+{
+  if (!ros::isInitialized())
+  {
+    ROS_FATAL("A ROS node for Gazebo has not been initialized, unable to load IMU plugin");
+    return;
+  }
+  ROS_INFO("Loaded the IMU plugin");
+
+  //
+  // Configure Gazebo Integration
+  //
+
   model_ = _model;
   world_ = model_->GetWorld();
 
-  // default params
+  last_time_ = world_->GetSimTime();
+
   namespace_.clear();
+
+
+  gravity_ = world_->GetPhysicsEngine()->GetGravity();
+
+  //
+  // Get elements from the robot urdf/sdf file
+  //
 
   if (_sdf->HasElement("namespace"))
     namespace_ = _sdf->GetElement("namespace")->Get<std::string>();
   else
-    gzerr << "[gazebo_imu_plugin] Please specify a namespace.\n";
-  nh_ = new ros::NodeHandle(namespace_);
+    ROS_ERROR("[imu_plugin] Please specify a namespace.");
+
+  if (_sdf->HasElement("linkName"))
+    link_name_ = _sdf->GetElement("linkName")->Get<std::string>();
+  else
+    ROS_ERROR("[imu_plugin] Please specify a linkName.");
+
+  link_ = model_->GetLink(link_name_);
+  if (link_ == nullptr)
+    gzthrow("[imu_plugin] Couldn't find specified link \"" << link_name_ << "\".");
+
+  // Get mass
+  mass_ = link_->GetInertial()->GetMass();
+
+  //
+  // ROS Node Setup
+  //
+
+  nh_ = ros::NodeHandle(namespace_);
   nh_private_ = ros::NodeHandle(namespace_ + "/imu");
 
-  if (_sdf->HasElement("link_name"))
-    link_name_ = _sdf->GetElement("link_name")->Get<std::string>();
-  else
-    gzerr << "[gazebo_imu_plugin] Please specify a link_name.\n";
-  // Get the pointer to the link
-  link_ = model_->GetLink(link_name_);
-  if (link_ == NULL)
-    gzthrow("[gazebo_imu_plugin] Couldn't find specified link \"" << link_name_ << "\".");
-
+  // load params from rosparam server
   noise_on_ = nh_private_.param<bool>("noise_on", true);
-  update_rate_ = nh_private_.param<double>("rate", 1000.0);
+  pub_rate_ = nh_private_.param<double>("rate", 1000.0);
   imu_topic_ = nh_private_.param<std::string>("topic", "imu/data");
   acc_bias_topic_ = nh_private_.param<std::string>("acc_bias_topic", "imu/acc_bias");
   gyro_bias_topic_ = nh_private_.param<std::string>("gyro_bias_topic", "imu/gyro_bias");
@@ -71,30 +94,17 @@ void ImuPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   acc_bias_range_ = nh_private_.param<double>("acc_bias_range", 0.15);
   acc_bias_walk_stdev_ = nh_private_.param<double>("acc_bias_walk_stdev", 0.001);
 
-  // Initialize some parts of the plugin
-  last_time_ = world_->GetSimTime();
-  gravity_ = world_->GetPhysicsEngine()->GetGravity();
+  // ROS Publishers
+  imu_pub_ = nh_.advertise<sensor_msgs::Imu>(imu_topic_, 10);
+  gyro_bias_pub_ = nh_.advertise<geometry_msgs::Vector3Stamped>(gyro_bias_topic_, 10);
+  acc_bias_pub_ = nh_.advertise<geometry_msgs::Vector3Stamped>(acc_bias_topic_, 10);
+
+  // Calculate sample time from sensor update rate
+  sample_time_ = 1.0/pub_rate_;
+
+  // Configure Noise
   normal_distribution_ = std::normal_distribution<double>(0.0, 1.0);
   uniform_distribution_ = std::uniform_real_distribution<double>(-1.0, 1.0);
-
-  // Connect update callback
-  this->updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&ImuPlugin::OnUpdate, this, _1));
-
-  // Set up the publishers
-  imu_pub_ = nh_->advertise<sensor_msgs::Imu>(imu_topic_, 10);
-  gyro_bias_pub_ = nh_->advertise<geometry_msgs::Vector3Stamped>(gyro_bias_topic_, 10);
-  acc_bias_pub_ = nh_->advertise<geometry_msgs::Vector3Stamped>(acc_bias_topic_, 10);
-
-  // Initialize the Bias
-  gyro_bias_.x = gyro_bias_range_*uniform_distribution_(random_generator_);
-  gyro_bias_.y = gyro_bias_range_*uniform_distribution_(random_generator_);
-  gyro_bias_.z = gyro_bias_range_*uniform_distribution_(random_generator_);
-  acc_bias_.x = acc_bias_range_*uniform_distribution_(random_generator_);
-  acc_bias_.y = acc_bias_range_*uniform_distribution_(random_generator_);
-  acc_bias_.z = acc_bias_range_*uniform_distribution_(random_generator_);
-
-  // Get mass
-  mass_ = link_->GetInertial()->GetMass();
 
   // Turn off noise and bias if noise_on_ disabled
   if (!noise_on_)
@@ -111,6 +121,14 @@ void ImuPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
     acc_bias_.z = 0;
   }
 
+  // Initialize the Bias
+  gyro_bias_.x = gyro_bias_range_*uniform_distribution_(random_generator_);
+  gyro_bias_.y = gyro_bias_range_*uniform_distribution_(random_generator_);
+  gyro_bias_.z = gyro_bias_range_*uniform_distribution_(random_generator_);
+  acc_bias_.x = acc_bias_range_*uniform_distribution_(random_generator_);
+  acc_bias_.y = acc_bias_range_*uniform_distribution_(random_generator_);
+  acc_bias_.z = acc_bias_range_*uniform_distribution_(random_generator_);
+ 
   // Set up static members of IMU message
   imu_message_.header.frame_id = link_name_;
   imu_message_.angular_velocity_covariance[0] = gyro_stdev_*gyro_stdev_;
@@ -119,6 +137,9 @@ void ImuPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   imu_message_.linear_acceleration_covariance[0] = acc_stdev_*acc_stdev_;
   imu_message_.linear_acceleration_covariance[4] = acc_stdev_*acc_stdev_;
   imu_message_.linear_acceleration_covariance[8] = acc_stdev_*acc_stdev_;
+
+  // Connect update callback
+  this->updateConnection_ = gazebo::event::Events::ConnectWorldUpdateBegin(std::bind(&ImuPlugin::OnUpdate, this, std::placeholders::_1));
 }
 
 void ImuPlugin::Reset()
@@ -127,20 +148,19 @@ void ImuPlugin::Reset()
 }
 
 // This gets called by the world update start event.
-void ImuPlugin::OnUpdate(const common::UpdateInfo& _info)
+void ImuPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 {
-  common::Time current_time  = world_->GetSimTime();
-  double dt = (current_time - last_time_).Double();
-
-  if(dt >= 1.0/update_rate_)
+  // check if time to publish
+  gazebo::common::Time current_time = world_->GetSimTime();
+  if ((current_time - last_time_).Double() >= sample_time_)
   {
-    math::Quaternion q_I_NWU = link_->GetWorldPose().rot;
-    math::Vector3 omega_B_NWU = link_->GetRelativeAngularVel();
-    math::Vector3 uvw_B_NWU = link_->GetRelativeLinearVel();
+    gazebo::math::Quaternion q_I_NWU = link_->GetWorldPose().rot;
+    gazebo::math::Vector3 omega_B_NWU = link_->GetRelativeAngularVel();
+    gazebo::math::Vector3 uvw_B_NWU = link_->GetRelativeLinearVel();
 
     // y_acc = F/m - R*g
-    math::Vector3 y_acc = link_->GetRelativeForce()/mass_ - q_I_NWU.RotateVectorReverse(gravity_);
-    math::Vector3 y_gyro = link_->GetRelativeAngularVel();
+    gazebo::math::Vector3 y_acc = link_->GetRelativeForce()/mass_ - q_I_NWU.RotateVectorReverse(gravity_);
+    gazebo::math::Vector3 y_gyro = link_->GetRelativeAngularVel();
 
     // Apply normal noise
     y_acc.x += acc_stdev_*normal_distribution_(random_generator_);

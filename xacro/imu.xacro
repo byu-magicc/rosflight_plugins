@@ -11,7 +11,7 @@
     <gazebo>
       <plugin filename="libimu_plugin.so" name="${namespace}_imu">
         <namespace>${namespace}</namespace>
-        <link_name>${parent_link}</link_name>
+        <linkName>${parent_link}</linkName>
       </plugin>
     </gazebo>
 
