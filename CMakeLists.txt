@@ -8,21 +8,21 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif()
 
+set(CMAKE_CXX_FLAGS "-fopenmp")
+
 # To enable assertions when compiled in release mode.
 add_definitions(-DROS_ASSERT_ENABLED)
 
 find_package(catkin REQUIRED COMPONENTS
-  cmake_modules
-  geometry_msgs
   roscpp
-  std_srvs
   tf
   rosflight_msgs
   rosflight_utils
-  sensor_msgs
   std_msgs
-  tf2_ros
   nav_msgs
+  geometry_msgs
+  sensor_msgs
+  std_srvs
   gazebo_ros
   gazebo_plugins
 )
@@ -32,53 +32,54 @@ find_package(gazebo REQUIRED)
 link_directories(${GAZEBO_LIBRARY_DIRS})
 
 catkin_package(
-  INCLUDE_DIRS include ${Eigen_INCLUDE_DIRS}
-  CATKIN_DEPENDS geometry_msgs roscpp std_srvs tf gazebo_plugins gazebo_ros tf2_ros std_msgs nav_msgs sensor_msgs
-  DEPENDS eigen gazebo rosflight_msgs SDF roscpp gazebo_ros
+  INCLUDE_DIRS include ${EIGEN3_INCLUDE_DIRS}
+  CATKIN_DEPENDS roscpp tf rosflight_msgs rosflight_utils std_msgs nav_msgs geometry_msgs sensor_msgs std_srvs gazebo_ros gazebo_plugins
+  DEPENDS EIGEN3 GAZEBO
 )
+
+###########
+## Build ##
+###########
 
 include_directories(
   include ${catkin_INCLUDE_DIRS} 
-  ${Eigen_INCLUDE_DIRS} 
+  ${EIGEN3_INCLUDE_DIRS} 
   ${GAZEBO_INCLUDE_DIRS}
 )
 
 add_library(magnetometer_plugin
-  src/magnetometer.cpp
-include/rosflight_plugins/magnetometer.h)
+  src/magnetometer.cpp)
 target_link_libraries(magnetometer_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 add_dependencies(magnetometer_plugin ${catkin_EXPORTED_TARGETS})
 
 add_library(odometry_plugin
-  src/odometry_plugin.cpp
-  include/rosflight_plugins/odometry_plugin.h)
-target_link_libraries(odometry_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${OpenCV_LIBRARIES})
+  src/odometry_plugin.cpp)
+target_link_libraries(odometry_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 add_dependencies(odometry_plugin ${catkin_EXPORTED_TARGETS})
 
 add_library(imu_plugin
-  src/imu_plugin.cpp
-  include/rosflight_plugins/imu_plugin.h)
+  src/imu_plugin.cpp)
 target_link_libraries(imu_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 add_dependencies(imu_plugin ${catkin_EXPORTED_TARGETS})
 
 add_library(barometer_plugin
-  src/barometer_plugin.cpp
-  include/rosflight_plugins/barometer_plugin.h)
+  src/barometer_plugin.cpp)
 target_link_libraries(barometer_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-add_dependencies(barometer_plugin ${catkin_EXPORTED_TARGETS} rosflight_msgs_generate_messages_cpp)
+add_dependencies(barometer_plugin ${catkin_EXPORTED_TARGETS})
 
 add_library(airspeed_plugin
-  src/airspeed_plugin.cpp
-  include/rosflight_plugins/airspeed_plugin.h)
+  src/airspeed_plugin.cpp)
 target_link_libraries(airspeed_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-add_dependencies(airspeed_plugin ${catkin_EXPORTED_TARGETS} rosflight_msgs_generate_messages_cpp)
+add_dependencies(airspeed_plugin ${catkin_EXPORTED_TARGETS})
 
 add_library(GPS_plugin
-  src/GPS_plugin.cpp
-  include/rosflight_plugins/GPS_plugin.h)
+  src/GPS_plugin.cpp)
 target_link_libraries(GPS_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-add_dependencies(GPS_plugin ${catkin_EXPORTED_TARGETS} rosflight_msgs_generate_messages_cpp)
+add_dependencies(GPS_plugin ${catkin_EXPORTED_TARGETS})
 
+#############
+## Install ##
+#############
 
 install(
   TARGETS
