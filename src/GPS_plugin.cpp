@@ -57,14 +57,13 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   if (_sdf->HasElement("namespace"))
     namespace_ = _sdf->GetElement("namespace")->Get<std::string>();
   else
-    gzerr << "[GPS_plugin] Please specify a namespace." << std::endl;
+    ROS_ERROR("[GPS_plugin] Please specify a namespace.");
 
   if (_sdf->HasElement("linkName"))
     link_name_ = _sdf->GetElement("linkName")->Get<std::string>();
   else
-    gzerr << "[GPS_plugin] Please specify a linkName." << std::endl;
+    ROS_ERROR("[GPS_plugin] Please specify a linkName.");
 
-  frame_id_ = link_name_;
   link_ = model_->GetLink(link_name_);
   if (link_ == nullptr)
     gzthrow("[GPS_plugin] Couldn't find specified link \"" << link_name_ << "\".");
@@ -114,7 +113,7 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   }
 
   // Fill static members of GPS message.
-  GPS_message_.header.frame_id = frame_id_;
+  GPS_message_.header.frame_id = link_name_;
   GPS_message_.fix = true;
   GPS_message_.NumSat = numSat;
 

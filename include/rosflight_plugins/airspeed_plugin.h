@@ -36,55 +36,54 @@
 namespace rosflight_plugins
 {
 
-class AirspeedPlugin : public gazebo::ModelPlugin {
- public:
+  class AirspeedPlugin : public gazebo::ModelPlugin {
+   public:
 
-  AirspeedPlugin();
-  ~AirspeedPlugin();
+    AirspeedPlugin();
+    ~AirspeedPlugin();
 
-  void InitializeParams();
-  void Publish();
+    void InitializeParams();
+    void Publish();
 
- protected:
+   protected:
 
-  void Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf);
-  void OnUpdate(const gazebo::common::UpdateInfo&);
+    void Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf);
+    void OnUpdate(const gazebo::common::UpdateInfo&);
 
- private:
-  std::string namespace_;
-  std::string airspeed_topic_;
-  ros::NodeHandle nh_;
-  ros::NodeHandle nh_private_;
-  ros::Publisher airspeed_pub_;
-  std::string frame_id_;
-  std::string link_name_;
+   private:
+    std::string namespace_;
+    std::string airspeed_topic_;
+    ros::NodeHandle nh_;
+    ros::NodeHandle nh_private_;
+    ros::Publisher airspeed_pub_;
+    std::string link_name_;
 
-  // Gazebo connections
-  gazebo::physics::WorldPtr world_;
-  gazebo::physics::ModelPtr model_;
-  gazebo::physics::LinkPtr link_;
-  gazebo::event::ConnectionPtr updateConnection_;
-  gazebo::common::Time last_time_;
+    // Gazebo connections
+    gazebo::physics::WorldPtr world_;
+    gazebo::physics::ModelPtr model_;
+    gazebo::physics::LinkPtr link_;
+    gazebo::event::ConnectionPtr updateConnection_;
+    gazebo::common::Time last_time_;
 
-  // Random Engine
-  std::default_random_engine random_generator_;
-  std::normal_distribution<double> standard_normal_distribution_;
+    // Random Engine
+    std::default_random_engine random_generator_;
+    std::normal_distribution<double> standard_normal_distribution_;
 
-  // Wind Connection
-  // struct Wind{ double N;  double E;  double D; } wind_;
-  // ros::Subscriber wind_speed_sub_;
-  // void WindSpeedCallback(const geometry_msgs::Vector3& wind);
+    // Wind Connection
+    // struct Wind{ double N;  double E;  double D; } wind_;
+    // ros::Subscriber wind_speed_sub_;
+    // void WindSpeedCallback(const geometry_msgs::Vector3& wind);
 
-  // Message with static info prefilled
-  rosflight_msgs::Airspeed airspeed_message_;
+    // Message with static info prefilled
+    rosflight_msgs::Airspeed airspeed_message_;
 
-  // params
-  double pressure_bias_;
-  double pressure_noise_sigma_;
-  double max_pressure_;
-  double min_pressure_;
-  double rho_;
-};
+    // params
+    double pressure_bias_;
+    double pressure_noise_sigma_;
+    double max_pressure_;
+    double min_pressure_;
+    double rho_;
+  };
 }
 
 #endif // ROSFLIGHT_PLUGINS_AIRSPEED_PLUGIN_H

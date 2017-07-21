@@ -56,14 +56,13 @@ void BarometerPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sd
   if (_sdf->HasElement("namespace"))
     namespace_ = _sdf->GetElement("namespace")->Get<std::string>();
   else
-    gzerr << "[barometer_plugin] Please specify a namespace." << std::endl;
+    ROS_ERROR("[barometer_plugin] Please specify a namespace.");
 
   if (_sdf->HasElement("linkName"))
     link_name_ = _sdf->GetElement("linkName")->Get<std::string>();
   else
-    gzerr << "[barometer_plugin] Please specify a linkName." << std::endl;
+    ROS_ERROR("[barometer_plugin] Please specify a linkName.");
 
-  frame_id_ = link_name_;
   link_ = model_->GetLink(link_name_);
   if (link_ == nullptr)
     gzthrow("[barometer_plugin] Couldn't find specified link \"" << link_name_ << "\".");
@@ -100,7 +99,7 @@ void BarometerPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sd
 void BarometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 {
   // check if time to publish
-  gazebo::common::Time current_time  = world_->GetSimTime();
+  gazebo::common::Time current_time = world_->GetSimTime();
   if ((current_time - last_time_).Double() >= sample_time_) {
 
     // pull z measurement out of Gazebo (ENU)
@@ -120,7 +119,7 @@ void BarometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 
     // publish message
     msg.header.stamp.fromSec(world_->GetSimTime().Double());
-    msg.header.frame_id = frame_id_;
+    msg.header.frame_id = link_name_;
     alt_pub_.publish(msg);
 
     // save current time

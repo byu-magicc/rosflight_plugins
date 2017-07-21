@@ -47,7 +47,6 @@ namespace rosflight_plugins
    private:
     // ROS Stuff
     std::string namespace_;
-    std::string frame_id_;
     ros::NodeHandle nh_;
     ros::NodeHandle nh_private_;
     ros::Publisher GPS_pub_;

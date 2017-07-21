@@ -50,9 +50,6 @@
 #include <chrono>
 #include <iostream>
 
-#include "rosflight_plugins/common.h"
-
-
 namespace gazebo {
 
 class OdometryPlugin : public ModelPlugin {

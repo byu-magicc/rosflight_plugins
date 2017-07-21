@@ -63,14 +63,13 @@ void AirspeedPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf
   if (_sdf->HasElement("namespace"))
     namespace_ = _sdf->GetElement("namespace")->Get<std::string>();
   else
-    gzerr << "[airspeed_plugin] Please specify a namespace." << std::endl;
+    ROS_ERROR("[airspeed_plugin] Please specify a namespace.");
 
   if (_sdf->HasElement("linkName"))
     link_name_ = _sdf->GetElement("linkName")->Get<std::string>();
   else
-    gzerr << "[airspeed_plugin] Please specify a linkName." << std::endl;
+    ROS_ERROR("[airspeed_plugin] Please specify a linkName.");
 
-  frame_id_ = link_name_;
   link_ = model_->GetLink(link_name_);
   if (link_ == nullptr)
     gzthrow("[airspeed_plugin] Couldn't find specified link \"" << link_name_ << "\".");
@@ -98,7 +97,7 @@ void AirspeedPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf
   standard_normal_distribution_ = std::normal_distribution<double>(0.0, 1.0);
 
   // Fill static members of airspeed message.
-  airspeed_message_.header.frame_id = frame_id_;
+  airspeed_message_.header.frame_id = link_name_;
 
   // Listen to the update event. This event is broadcast every simulation iteration.
   this->updateConnection_ = gazebo::event::Events::ConnectWorldUpdateBegin(std::bind(&AirspeedPlugin::OnUpdate, this, std::placeholders::_1));
