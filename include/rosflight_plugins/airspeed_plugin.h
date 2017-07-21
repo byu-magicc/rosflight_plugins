@@ -18,29 +18,25 @@
 #define ROSFLIGHT_PLUGINS_AIRSPEED_PLUGIN_H
 
 #include <random>
+#include <chrono>
+#include <cmath>
+#include <iostream>
 
-#include <eigen3/Eigen/Core>
+#include <ros/ros.h>
+
 #include <gazebo/common/common.hh>
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
-#include <ros/callback_queue.h>
-#include <ros/ros.h>
-#include <rosflight_msgs/Airspeed.h>
+
 #include <geometry_msgs/Vector3.h>
 
-#include <chrono>
-#include <cmath>
-#include <iostream>
-#include <stdio.h>
+#include <rosflight_msgs/Airspeed.h>
 
-#include <boost/bind.hpp>
+namespace rosflight_plugins
+{
 
-#include "rosflight_plugins/common.h"
-
-namespace gazebo {
-
-class AirspeedPlugin : public ModelPlugin {
+class AirspeedPlugin : public gazebo::ModelPlugin {
  public:
 
   AirspeedPlugin();
@@ -51,35 +47,38 @@ class AirspeedPlugin : public ModelPlugin {
 
  protected:
 
-  void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
-  void OnUpdate(const common::UpdateInfo&);
+  void Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf);
+  void OnUpdate(const gazebo::common::UpdateInfo&);
 
  private:
   std::string namespace_;
   std::string airspeed_topic_;
-  ros::NodeHandle* nh_;
+  ros::NodeHandle nh_;
+  ros::NodeHandle nh_private_;
   ros::Publisher airspeed_pub_;
   std::string frame_id_;
   std::string link_name_;
 
+  // Gazebo connections
+  gazebo::physics::WorldPtr world_;
+  gazebo::physics::ModelPtr model_;
+  gazebo::physics::LinkPtr link_;
+  gazebo::event::ConnectionPtr updateConnection_;
+  gazebo::common::Time last_time_;
+
+  // Random Engine
   std::default_random_engine random_generator_;
   std::normal_distribution<double> standard_normal_distribution_;
 
-  // Gazebo connections
-  physics::WorldPtr world_;
-  physics::ModelPtr model_;
-  physics::LinkPtr link_;
-  event::ConnectionPtr updateConnection_;
-
-  common::Time last_time_;
-
   // Wind Connection
-  struct Wind{ double N;  double E;  double D; } wind_;
-  ros::Subscriber wind_speed_sub_;
-  void WindSpeedCallback(const geometry_msgs::Vector3& wind);
+  // struct Wind{ double N;  double E;  double D; } wind_;
+  // ros::Subscriber wind_speed_sub_;
+  // void WindSpeedCallback(const geometry_msgs::Vector3& wind);
 
+  // Message with static info prefilled
   rosflight_msgs::Airspeed airspeed_message_;
 
+  // params
   double pressure_bias_;
   double pressure_noise_sigma_;
   double max_pressure_;
