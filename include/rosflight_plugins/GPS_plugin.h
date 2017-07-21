@@ -18,95 +18,85 @@
 #define ROSFLIGHT_PLUGINS_GPS_PLUGIN_H
 
 #include <random>
+#include <chrono>
+#include <cmath>
+#include <iostream>
 
-#include <eigen3/Eigen/Core>
+#include <ros/ros.h>
+
 #include <gazebo/common/common.hh>
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
-#include <ros/callback_queue.h>
-#include <ros/ros.h>
+
 #include <rosflight_msgs/GPS.h>
 
-#include <chrono>
-#include <cmath>
-#include <iostream>
-#include <stdio.h>
-
-#include <boost/bind.hpp>
-
-#include "rosflight_plugins/common.h"
-
-namespace gazebo 
+namespace rosflight_plugins 
 {
 
-class GPSPlugin : public ModelPlugin 
-{
- public:
+  class GPSPlugin : public gazebo::ModelPlugin 
+  {
+   public:
+    GPSPlugin();
+    ~GPSPlugin();
 
-  GPSPlugin();
-  ~GPSPlugin();
+   protected:
+    void Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf);
+    void OnUpdate(const gazebo::common::UpdateInfo&);
 
-  void InitializeParams();
-  void Publish();
+   private:
+    // ROS Stuff
+    std::string namespace_;
+    std::string frame_id_;
+    ros::NodeHandle nh_;
+    ros::NodeHandle nh_private_;
+    ros::Publisher GPS_pub_;
 
- protected:
+    // Gazebo connections
+    std::string link_name_;
+    gazebo::physics::WorldPtr world_;
+    gazebo::physics::ModelPtr model_;
+    gazebo::physics::LinkPtr link_;
+    gazebo::event::ConnectionPtr updateConnection_;
+    gazebo::common::Time last_time_;
 
-  void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
-  void OnUpdate(const common::UpdateInfo&);
+    // Random Engine
+    std::default_random_engine random_generator_;
+    std::normal_distribution<double> standard_normal_distribution_;
 
- private:
-  std::string namespace_;
-  std::string GPS_topic_;
-  ros::NodeHandle* nh_;
-  ros::NodeHandle nh_private_;
-  ros::Publisher GPS_pub_;
-  double update_rate_;
-  std::string frame_id_;
-  std::string link_name_;
-  bool noise_on_;
+    // Topic
+    std::string GPS_topic_;
 
-  std::default_random_engine random_generator_;
-  std::normal_distribution<double> standard_normal_distribution_;
+    // Message with static info prefilled
+    rosflight_msgs::GPS GPS_message_;
 
-  // Gazebo connections
-  physics::WorldPtr world_;
-  physics::ModelPtr model_;
-  physics::LinkPtr link_;
-  event::ConnectionPtr updateConnection_;
+    // params
+    double pub_rate_;
+    bool noise_on_;
+    double north_stdev_;
+    double east_stdev_;
+    double alt_stdev_;
 
-  common::Time last_time_;
-  double next_pub_time_;
+    double north_k_GPS_;
+    double east_k_GPS_;
+    double alt_k_GPS_;
 
-  // Wind Connection
-  struct Wind{ double N;  double E;  double D; } wind_;
-  ros::Subscriber wind_speed_sub_;
+    double north_GPS_error_;
+    double east_GPS_error_;
+    double alt_GPS_error_;
 
-  rosflight_msgs::GPS GPS_message_;
+    double initial_latitude_;
+    double initial_longitude_;
+    double initial_altitude_;
 
-  double north_stdev_;
-  double east_stdev_;
-  double alt_stdev_;
+    double length_latitude_;
+    double length_longitude_;
 
-  double north_k_GPS_;
-  double east_k_GPS_;
-  double alt_k_GPS_;
-  double sample_time_;
+    double sample_time_;
 
-  double north_GPS_error_;
-  double east_GPS_error_;
-  double alt_GPS_error_;
+    void measure(double dpn, double dpe, double & dlat, double & dlon);
 
-  double initial_latitude_;
-  double initial_longitude_;
-  double initial_altitude_;
-
-  double length_latitude_;
-  double length_longitude_;
-
-  void measure(double dpn, double dpe, double & dlat, double & dlon);
-
-};
+  };
 }
 
 #endif // ROSFLIGHT_PLUGINS_GPS_PLUGIN_H
