@@ -22,12 +22,16 @@
 #ifndef ROSFLIGHT_PLUGINS_GAZEBO_ODOMETRY_PLUGIN_H
 #define ROSFLIGHT_PLUGINS_GAZEBO_ODOMETRY_PLUGIN_H
 
-#include <cmath>
-#include <deque>
 #include <random>
-#include <stdio.h>
+#include <chrono>
+#include <cmath>
+#include <iostream>
 
-#include <boost/bind.hpp>
+#include <ros/ros.h>
+
+#include <tf/tf.h>
+#include <tf/transform_broadcaster.h>
+
 #include <gazebo/common/common.hh>
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/gazebo.hh>
@@ -43,63 +47,47 @@
 #include <geometry_msgs/TwistWithCovarianceStamped.h>
 #include <nav_msgs/Odometry.h>
 
-#include <ros/callback_queue.h>
-#include <ros/ros.h>
-#include <tf/transform_broadcaster.h>
-#include <tf/tf.h>
-#include <chrono>
-#include <iostream>
+namespace rosflight_plugins
+{
 
-namespace gazebo {
+  class OdometryPlugin : public gazebo::ModelPlugin {
+   public:
+    typedef std::normal_distribution<> NormalDistribution;
+    typedef std::uniform_real_distribution<> UniformDistribution;
 
-class OdometryPlugin : public ModelPlugin {
- public:
-  typedef std::normal_distribution<> NormalDistribution;
-  typedef std::uniform_real_distribution<> UniformDistribution;
-  typedef std::deque<std::pair<int, nav_msgs::Odometry> > OdometryQueue;
+    OdometryPlugin() : gazebo::ModelPlugin() { }
+    ~OdometryPlugin();
 
-  OdometryPlugin() : ModelPlugin() {}
+   protected:
+    void Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf);
+    void OnUpdate(const gazebo::common::UpdateInfo&);
 
-  ~OdometryPlugin();
+   private:
+    // ROS Stuff
+    ros::NodeHandle nh_;
+    ros::NodeHandle nh_private_;
+    ros::Publisher transform_NWU_pub_;
+    ros::Publisher transform_NED_pub_;
+    ros::Publisher odometry_NWU_pub_;
+    ros::Publisher odometry_NED_pub_;
+    ros::Publisher euler_pub_;
 
-  void InitializeParams();
-  void Publish();
+    std::string namespace_;
+    std::string transform_pub_topic_;
+    std::string odometry_pub_topic_;
+    std::string parent_frame_id_;
+    std::string link_name_;
 
- protected:
-  void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
-  void OnUpdate(const common::UpdateInfo& /*_info*/);
+    int gazebo_sequence_;
+    int odometry_sequence_;
 
- private:
-  OdometryQueue odometry_queue_;
-
-  std::string namespace_;
-  std::string transform_pub_topic_;
-  std::string odometry_pub_topic_;
-  std::string parent_frame_id_;
-  std::string link_name_;
-
-  int gazebo_sequence_;
-  int odometry_sequence_;
-
-  ros::NodeHandle* nh_;
-  ros::NodeHandle nh_private_;
-  ros::Publisher transform_NWU_pub_;
-  ros::Publisher transform_NED_pub_;
-  ros::Publisher odometry_NWU_pub_;
-  ros::Publisher odometry_NED_pub_;
-  ros::Publisher euler_pub_;
-
-  physics::WorldPtr world_;
-  physics::ModelPtr model_;
-  physics::LinkPtr link_;
-  physics::EntityPtr parent_link_;
-
-  /// \brief Pointer to the update event connection.
-  event::ConnectionPtr updateConnection_;
-
-  boost::thread callback_queue_thread_;
-  void QueueThread();
-};
+    // Gazebo Information
+    gazebo::physics::WorldPtr world_;
+    gazebo::physics::ModelPtr model_;
+    gazebo::physics::LinkPtr link_;
+    gazebo::physics::EntityPtr parent_link_;
+    gazebo::event::ConnectionPtr updateConnection_;
+  };
 }
 
 #endif // ROSFLIGHT_PLUGINS_GAZEBO_ODOMETRY_PLUGIN_H
