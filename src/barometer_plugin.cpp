@@ -56,7 +56,7 @@ void BarometerPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   frame_id_ = link_name_;
 
   // load params from xacro
-  message_topic_ = nh_private_.param<std::string>("topic", "baro/data");
+  message_topic_ = nh_private_.param<std::string>("topic", "baro");
   error_stdev_ = nh_private_.param<double>("stdev", 0.10);
   pub_rate_ = nh_private_.param<double>("rate", 50.0);
   noise_on_ = nh_private_.param<bool>("noise_on", true);

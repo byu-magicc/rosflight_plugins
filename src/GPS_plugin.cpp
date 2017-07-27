@@ -63,7 +63,7 @@ void GPSPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 
   int numSat;
   noise_on_ = nh_private_.param<bool>("noise_on", true);
-  GPS_topic_ = nh_private_.param<std::string>("topic", "gps/data");
+  GPS_topic_ = nh_private_.param<std::string>("topic", "gps");
   north_stdev_ = nh_private_.param<double>("north_stdev", 0.21);
   east_stdev_ = nh_private_.param<double>("east_stdev", 0.21);
   alt_stdev_ = nh_private_.param<double>("alt_stdev", 0.40);

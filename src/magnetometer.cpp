@@ -55,7 +55,7 @@ void MagnetometerPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   next_pub_time_ = world_->GetSimTime().Double();
 
   noise_on_ = nh_private_.param<bool>("noise_on", true);
-  mag_topic_ = nh_private_.param<std::string>("topic", "mag/data");
+  mag_topic_ = nh_private_.param<std::string>("topic", "magnetometor");
   noise_sigma_ = nh_private_.param<double>("stdev", 0.01);
   bias_range_ = nh_private_.param<double>("bias_range", 0.01);
   pub_rate_ = nh_private_.param<double>("rate", 50.0);
