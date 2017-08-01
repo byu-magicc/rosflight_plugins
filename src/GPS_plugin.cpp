@@ -74,7 +74,7 @@ void GPSPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   initial_latitude_ = nh_private_.param<double>("initial_latitude", 40.267320); // default to Provo, UT
   initial_longitude_ = nh_private_.param<double>("initial_longitude", -111.635629); // default to Provo, UT
   initial_altitude_ = nh_private_.param<double>("initial_altitude", 1387.0); // default to Provo, UT
-  numSat = nh_private_.param<int>("num_sats", numSat, 7);
+  numSat = nh_private_.param<int>("num_sats", 7);
 
   last_time_ = world_->GetSimTime();
 
