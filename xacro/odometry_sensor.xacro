@@ -10,7 +10,7 @@
 
     <gazebo>
       <plugin filename="libodometry_plugin.so" name="${namespace}_odometry_sensor">
-        <parent_link>${parent_link}</parent_link>
+        <linkName>${parent_link}</linkName>
         <namespace>${namespace}</namespace>
       </plugin>
     </gazebo>

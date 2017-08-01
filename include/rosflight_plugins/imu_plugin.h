@@ -18,84 +18,79 @@
 #define ROSFLIGHT_PLUGINS_IMU_PLUGIN_H
 
 #include <random>
+#include <chrono>
+#include <cmath>
+#include <iostream>
+
+#include <ros/ros.h>
 
 #include <gazebo/common/common.hh>
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
-#include <ros/ros.h>
+
 #include <sensor_msgs/Imu.h>
 #include <geometry_msgs/Vector3Stamped.h>
 
-#include <cmath>
-#include <iostream>
-#include <stdio.h>
+namespace rosflight_plugins
+{
 
-#include <boost/bind.hpp>
+  class ImuPlugin : public gazebo::ModelPlugin {
+   public:
+    ImuPlugin();
+    ~ImuPlugin();
 
-#include "rosflight_plugins/common.h"
+   protected:
+    void Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf);
+    void OnUpdate(const gazebo::common::UpdateInfo&);
 
+    void Reset();
 
-namespace gazebo {
+   private:
+    // ROS Stuff
+    std::string namespace_;
+    std::string imu_topic_;
+    std::string acc_bias_topic_;
+    std::string gyro_bias_topic_;
+    std::string link_name_;
 
-class ImuPlugin : public ModelPlugin {
- public:
+    ros::NodeHandle nh_;
+    ros::NodeHandle nh_private_;
+    ros::Publisher imu_pub_;
+    ros::Publisher acc_bias_pub_;
+    ros::Publisher gyro_bias_pub_;
 
-  ImuPlugin();
-  ~ImuPlugin();
+    // params
+    bool noise_on_;
+    double pub_rate_;
+    double sample_time_;
+    double gyro_stdev_;
+    double acc_stdev_;
+    double gyro_bias_range_;
+    double acc_bias_range_;
+    double gyro_bias_walk_stdev_;
+    double acc_bias_walk_stdev_;
+    double mass_;
 
-  void InitializeParams();
-  void Publish();
+    // Random Engine
+    std::default_random_engine random_generator_;
+    std::normal_distribution<double> normal_distribution_;
+    std::uniform_real_distribution<double> uniform_distribution_;
 
- protected:
-  void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
+    gazebo::physics::WorldPtr world_;
+    gazebo::physics::ModelPtr model_;
+    gazebo::physics::LinkPtr link_;
+    gazebo::event::ConnectionPtr updateConnection_;
 
-  void Reset();
+    gazebo::common::Time last_time_;
 
-  void OnUpdate(const common::UpdateInfo&);
+    sensor_msgs::Imu imu_message_;
 
- private:
-  std::string namespace_;
-  std::string imu_topic_;
-  std::string acc_bias_topic_;
-  std::string gyro_bias_topic_;
-  std::string link_name_;
+    gazebo::math::Vector3 gravity_;
 
-  ros::NodeHandle* nh_;
-  ros::NodeHandle nh_private_;
-  ros::Publisher imu_pub_;
-  ros::Publisher acc_bias_pub_;
-  ros::Publisher gyro_bias_pub_;
-
-  bool noise_on_;
-  double update_rate_;
-  double gyro_stdev_;
-  double acc_stdev_;
-  double gyro_bias_range_;
-  double acc_bias_range_;
-  double gyro_bias_walk_stdev_;
-  double acc_bias_walk_stdev_;
-  double mass_;
-
-  std::default_random_engine random_generator_;
-  std::normal_distribution<double> normal_distribution_;
-  std::uniform_real_distribution<double> uniform_distribution_;
-
-  physics::WorldPtr world_;
-  physics::ModelPtr model_;
-  physics::LinkPtr link_;
-  event::ConnectionPtr updateConnection_;
-
-  common::Time last_time_;
-
-  sensor_msgs::Imu imu_message_;
-
-  math::Vector3 gravity_;
-  math::Vector3 prev_velocity_;
-
-  math::Vector3 gyro_bias_;
-  math::Vector3 acc_bias_;
-};
+    gazebo::math::Vector3 gyro_bias_;
+    gazebo::math::Vector3 acc_bias_;
+  };
 }
 
 #endif // ROSFLIGHT_PLUGINS_IMU_PLUGIN_H

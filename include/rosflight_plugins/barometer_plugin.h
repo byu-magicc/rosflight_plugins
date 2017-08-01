@@ -18,70 +18,62 @@
 #define ROSFLIGHT_PLUGINS_RANGE_PLUGIN_H
 
 #include <random>
+#include <chrono>
+#include <cmath>
+#include <iostream>
 
-#include <eigen3/Eigen/Core>
+#include <ros/ros.h>
+
 #include <gazebo/common/common.hh>
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
-#include <ros/callback_queue.h>
-#include <ros/ros.h>
+
 #include <rosflight_msgs/Barometer.h>
 
-#include <chrono>
-#include <cmath>
-#include <iostream>
-#include <stdio.h>
+namespace rosflight_plugins
+{
 
-#include <boost/bind.hpp>
+  class BarometerPlugin : public gazebo::ModelPlugin
+  {
+   public:
 
-#include "rosflight_plugins/common.h"
+    BarometerPlugin();
+    ~BarometerPlugin();
 
-namespace gazebo {
+   protected:
+    void Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf) override;
+    void OnUpdate(const gazebo::common::UpdateInfo&);
 
-class BarometerPlugin : public ModelPlugin {
- public:
+   private:
+    // ROS Stuff
+    std::string namespace_;
+    ros::NodeHandle nh_;
+    ros::NodeHandle nh_private_;
+    ros::Publisher alt_pub_;
 
-  BarometerPlugin();
-  ~BarometerPlugin();
+    // Topic
+    std::string message_topic_;
 
- protected:
-  void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
-  void OnUpdate(const common::UpdateInfo&);
+    // params
+    double error_stdev_;
+    double pub_rate_;
+    bool noise_on_;
+    double sample_time_;
 
- private:
-  // Ros Stuff
-  std::string namespace_;
-  ros::NodeHandle* nh_;
-  ros::NodeHandle nh_private_;
-  ros::Publisher alt_pub_;
+    // Random Engine
+    std::default_random_engine random_generator_;
+    std::normal_distribution<double> standard_normal_distribution_;
 
-  // Topic
-  std::string message_topic_;
+    // Gazebo Information
+    std::string link_name_;
+    gazebo::physics::WorldPtr world_;
+    gazebo::physics::ModelPtr model_;
+    gazebo::physics::LinkPtr link_;
+    gazebo::event::ConnectionPtr updateConnection_;
+    gazebo::common::Time last_time_;
 
-  // params
-  double min_range_;
-  double max_range_;
-  double error_stdev_;
-  double field_of_view_;
-  double pub_rate_;
-  bool noise_on_;
-  bool publish_float_;
-
-  // Random Engine
-  std::default_random_engine random_generator_;
-  std::normal_distribution<double> standard_normal_distribution_;
-
-  // Gazebo Information
-  std::string frame_id_;
-  std::string link_name_;
-  physics::WorldPtr world_;
-  physics::ModelPtr model_;
-  physics::LinkPtr link_;
-  event::ConnectionPtr updateConnection_;
-  common::Time last_time_;
-
-};
+  };
 }
 
 #endif // ROSFLIGHT_PLUGINS_RANGE_PLUGIN_H

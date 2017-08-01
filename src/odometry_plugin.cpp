@@ -17,63 +17,86 @@
 
 #include "rosflight_plugins/odometry_plugin.h"
 
-namespace gazebo {
+namespace rosflight_plugins
+{
 
 OdometryPlugin::~OdometryPlugin() {
-  event::Events::DisconnectWorldUpdateBegin(updateConnection_);
-  if (nh_) {
-    nh_->shutdown();
-    delete nh_;
-  }
+  gazebo::event::Events::DisconnectWorldUpdateBegin(updateConnection_);
+  nh_.shutdown();
 }
 
 
-void OdometryPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
-  // Store the pointer to the model
+void OdometryPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
+{
+  if (!ros::isInitialized())
+  {
+    ROS_FATAL("A ROS node for Gazebo has not been initialized, unable to load odometry plugin");
+    return;
+  }
+  ROS_INFO("Loaded the odometry plugin");
+
+  //
+  // Configure Gazebo Integration
+  //
+
   model_ = _model;
   world_ = model_->GetWorld();
 
-  odometry_queue_.clear();
+  namespace_.clear();
+
+  //
+  // Get elements from the robot urdf/sdf file
+  //
 
   if (_sdf->HasElement("namespace"))
     namespace_ = _sdf->GetElement("namespace")->Get<std::string>();
   else
-    gzerr << "[gazebo_odometry_plugin] Please specify a namespace.\n";
-  nh_ = new ros::NodeHandle(namespace_);
+    ROS_ERROR("[odometry_plugin] Please specify a namespace.");
+
+  if (_sdf->HasElement("linkName"))
+    link_name_ = _sdf->GetElement("linkName")->Get<std::string>();
+  else
+    ROS_ERROR("[odometry_plugin] Please specify a linkName.");
+
+  link_ = model_->GetLink(link_name_);
+  if (link_ == nullptr)
+    gzthrow("[odometry_plugin] Couldn't find specified link \"" << link_name_ << "\".");
+  
+
+  //
+  // ROS Node Setup
+  //
+
+  nh_ = ros::NodeHandle(namespace_);
   nh_private_ = ros::NodeHandle(namespace_ + "/odometry");
 
-  if (_sdf->HasElement("parent_link"))
-    link_name_ = _sdf->GetElement("parent_link")->Get<std::string>();
-  else
-    gzerr << "[gazebo_odometry_plugin] Please specify a parent_link.\n";
-  link_ = model_->GetLink(link_name_);
-  if (link_ == NULL)
-    gzthrow("[gazebo_odometry_plugin] Couldn't find specified link \"" << link_name_ << "\".");
-
+  // load params from rosparam server
   transform_pub_topic_ = nh_private_.param<std::string>("transform_topic", "transform");
   odometry_pub_topic_ = nh_private_.param<std::string>("odometry_topic", "odometry");
   parent_frame_id_ = nh_private_.param<std::string>("frame_id", "world");
 
   parent_link_ = world_->GetEntity(parent_frame_id_);
-  if (parent_link_ == NULL && parent_frame_id_ != "world") {
+  if (parent_link_ == nullptr && parent_frame_id_ != "world")
     gzthrow("[gazebo_odometry_plugin] Couldn't find specified parent link \"" << parent_frame_id_ << "\".");
-  }
+ 
+  // ROS Publishers
+  transform_NED_pub_ = nh_.advertise<geometry_msgs::TransformStamped>(transform_pub_topic_ + "/NED", 10);
+  transform_NWU_pub_ = nh_.advertise<geometry_msgs::TransformStamped>(transform_pub_topic_ + "/NWU", 10);
+  odometry_NED_pub_ = nh_.advertise<nav_msgs::Odometry>(odometry_pub_topic_ + "/NED", 10);
+  odometry_NWU_pub_ = nh_.advertise<nav_msgs::Odometry>(odometry_pub_topic_+ "/NWU", 10);
+  euler_pub_ = nh_.advertise<geometry_msgs::Vector3Stamped>("euler", 1);
 
-  updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&OdometryPlugin::OnUpdate, this, _1));
-  transform_NED_pub_ = nh_->advertise<geometry_msgs::TransformStamped>(transform_pub_topic_ + "/NED", 10);
-  transform_NWU_pub_ = nh_->advertise<geometry_msgs::TransformStamped>(transform_pub_topic_ + "/NWU", 10);
-  odometry_NED_pub_ = nh_->advertise<nav_msgs::Odometry>(odometry_pub_topic_ + "/NED", 10);
-  odometry_NWU_pub_ = nh_->advertise<nav_msgs::Odometry>(odometry_pub_topic_+ "/NWU", 10);
-  euler_pub_ = nh_->advertise<geometry_msgs::Vector3Stamped>("euler", 1);
+  // Listen to the update event. This event is broadcast every simulation iteration.
+  this->updateConnection_ = gazebo::event::Events::ConnectWorldUpdateBegin(std::bind(&OdometryPlugin::OnUpdate, this, std::placeholders::_1));
 }
 
-// This gets called by the world update start event.
-void OdometryPlugin::OnUpdate(const common::UpdateInfo& _info) {
+
+void OdometryPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info) {
   // C denotes child frame, P parent frame, and W world frame.
   // Further C_pose_W_P denotes pose of P wrt. W expressed in C.
-  math::Pose inertial_pose = link_->GetWorldCoGPose();
-  math::Vector3 body_fixed_linear_velocity = link_->GetRelativeLinearVel();
-  math::Vector3 body_fixed_angular_velocity = link_->GetRelativeAngularVel();
+  gazebo::math::Pose inertial_pose = link_->GetWorldCoGPose();
+  gazebo::math::Vector3 body_fixed_linear_velocity = link_->GetRelativeLinearVel();
+  gazebo::math::Vector3 body_fixed_angular_velocity = link_->GetRelativeAngularVel();
 
   nav_msgs::Odometry odometry_NED, odometry_NWU;
   geometry_msgs::TransformStamped transform_NED, transform_NWU;
