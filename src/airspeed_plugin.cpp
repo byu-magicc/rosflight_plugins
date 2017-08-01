@@ -77,12 +77,11 @@ void AirspeedPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf
   //
   // ROS Node Setup
   //
-
   nh_ = ros::NodeHandle(namespace_);
   nh_private_ = ros::NodeHandle(namespace_ + "/airspeed");
 
   // load params from rosparam server
-  airspeed_topic_ = nh_private_.param<std::string>("airspeed_topic", "airspeed/data");
+  airspeed_topic_ = nh_private_.param<std::string>("airspeed_topic", "airspeed");
   pressure_bias_ = nh_private_.param<double>("pressure_bias", 0);
   pressure_noise_sigma_ = nh_private_.param<double>("pressure_noise_sigma", 0);
   rho_ = nh_private_.param<double>("air_density", 1.225);

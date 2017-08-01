@@ -76,7 +76,7 @@ void BarometerPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sd
   nh_private_ = ros::NodeHandle(namespace_ + "/barometer");
 
   // load params from rosparam server
-  message_topic_ = nh_private_.param<std::string>("topic", "baro/data");
+  message_topic_ = nh_private_.param<std::string>("topic", "baro");
   error_stdev_ = nh_private_.param<double>("stdev", 0.10);
   pub_rate_ = nh_private_.param<double>("rate", 50.0);
   noise_on_ = nh_private_.param<bool>("noise_on", true);
