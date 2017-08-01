@@ -16,85 +16,111 @@
 
 #include "rosflight_plugins/barometer_plugin.h"
 
-namespace gazebo {
+namespace rosflight_plugins
+{
 
-BarometerPlugin::BarometerPlugin()
-    : ModelPlugin(),
-      nh_(0){}
+BarometerPlugin::BarometerPlugin() : gazebo::ModelPlugin() { }
 
-BarometerPlugin::~BarometerPlugin() {
-  event::Events::DisconnectWorldUpdateBegin(updateConnection_);
-  if (nh_) {
-    nh_->shutdown();
-    delete nh_;
-  }
+BarometerPlugin::~BarometerPlugin()
+{
+  gazebo::event::Events::DisconnectWorldUpdateBegin(updateConnection_);
+  nh_.shutdown();
 }
 
 
-void BarometerPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
+void BarometerPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
 {
+  if (!ros::isInitialized())
+  {
+    ROS_FATAL("A ROS node for Gazebo has not been initialized, unable to load barometer plugin");
+    return;
+  }
+  ROS_INFO("Loaded the barometer plugin");
+
+  //
   // Configure Gazebo Integration
+  //
+
   model_ = _model;
   world_ = model_->GetWorld();
+
+  last_time_ = world_->GetSimTime();
+
   namespace_.clear();
+  
+
+  //
+  // Get elements from the robot urdf/sdf file
+  //
+
   if (_sdf->HasElement("namespace"))
     namespace_ = _sdf->GetElement("namespace")->Get<std::string>();
   else
-    gzerr << "[barometer_plugin] Please specify a namespace.\n";
-  nh_ = new ros::NodeHandle(namespace_);
-  nh_private_ = ros::NodeHandle(namespace_ + "/barometer");
+    ROS_ERROR("[barometer_plugin] Please specify a namespace.");
 
   if (_sdf->HasElement("linkName"))
     link_name_ = _sdf->GetElement("linkName")->Get<std::string>();
   else
-    gzerr << "[barometer_plugin] Please specify a linkName.\n";
-  link_ = model_->GetLink(link_name_);
-  if (link_ == NULL)
-    gzthrow("[barometer_plugin] Couldn't find specified link \"" << link_name_ << "\".");
-  // Connect to the Gazebo Update
-  this->updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&BarometerPlugin::OnUpdate, this, _1));
-  frame_id_ = link_name_;
+    ROS_ERROR("[barometer_plugin] Please specify a linkName.");
 
-  // load params from xacro
+  link_ = model_->GetLink(link_name_);
+  if (link_ == nullptr)
+    gzthrow("[barometer_plugin] Couldn't find specified link \"" << link_name_ << "\".");
+  
+
+  //
+  // ROS Node Setup
+  //
+
+  nh_ = ros::NodeHandle(namespace_);
+  nh_private_ = ros::NodeHandle(namespace_ + "/barometer");
+
+  // load params from rosparam server
   message_topic_ = nh_private_.param<std::string>("topic", "baro");
   error_stdev_ = nh_private_.param<double>("stdev", 0.10);
   pub_rate_ = nh_private_.param<double>("rate", 50.0);
   noise_on_ = nh_private_.param<bool>("noise_on", true);
-  last_time_ = world_->GetSimTime();
 
-  // Configure ROS Integration
-  alt_pub_ = nh_->advertise<rosflight_msgs::Barometer>(message_topic_, 10);
+  // ROS Publishers
+  alt_pub_ = nh_.advertise<rosflight_msgs::Barometer>(message_topic_, 10);
+
+  // Calculate sample time from sensor update rate
+  sample_time_ = 1.0/pub_rate_;
 
   // Configure Noise
-  random_generator_= std::default_random_engine(std::chrono::system_clock::now().time_since_epoch().count());
+  random_generator_ = std::default_random_engine(std::chrono::system_clock::now().time_since_epoch().count());
   standard_normal_distribution_ = std::normal_distribution<double>(0.0, error_stdev_);
+
+  // Listen to the update event. This event is broadcast every simulation iteration.
+  this->updateConnection_ = gazebo::event::Events::ConnectWorldUpdateBegin(std::bind(&BarometerPlugin::OnUpdate, this, std::placeholders::_1));
 }
 
 
-void BarometerPlugin::OnUpdate(const common::UpdateInfo& _info)
+void BarometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 {
   // check if time to publish
-  common::Time current_time  = world_->GetSimTime();
-  if((current_time - last_time_).Double() >= 1.0/pub_rate_){
+  gazebo::common::Time current_time = world_->GetSimTime();
+  if ((current_time - last_time_).Double() >= sample_time_) {
 
-    // pull z measurement out of Gazebo
-    math::Pose current_state_LFU = link_->GetWorldPose();
+    // pull z measurement out of Gazebo (ENU)
+    gazebo::math::Pose pose = link_->GetWorldPose();
 
-    rosflight_msgs::Barometer message;
-    message.altitude = current_state_LFU.pos.z;
-    // add noise, if requested
-    if(noise_on_){
-      message.altitude += standard_normal_distribution_(random_generator_);
-    }
+    // Create a new barometer message
+    rosflight_msgs::Barometer msg;
+    msg.altitude = pose.pos.z;
+
+    // if requested add noise to altitude measurement
+    if (noise_on_)
+      msg.altitude += standard_normal_distribution_(random_generator_);
 
     // Invert measurement model for pressure and temperature
-    message.temperature = 25.0; // This is constant for simulation
-    message.pressure = 101325.0*pow(1- (2.25577e-5 * message.altitude), 5.25588);
-
+    msg.temperature = 25.0; // This is constant for simulation
+    msg.pressure = 101325.0*pow(1- (2.25577e-5 * msg.altitude), 5.25588);
 
     // publish message
-    message.header.stamp.fromSec(world_->GetSimTime().Double());
-    alt_pub_.publish(message);
+    msg.header.stamp.fromSec(world_->GetSimTime().Double());
+    msg.header.frame_id = link_name_;
+    alt_pub_.publish(msg);
 
     // save current time
     last_time_ = current_time;
