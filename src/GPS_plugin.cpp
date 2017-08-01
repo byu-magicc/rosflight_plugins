@@ -190,7 +190,7 @@ void GPSPlugin::measure(double dpn, double dpe, double& dlat, double& dlon)
   double R = Re + initial_altitude_; // current radius from earth center
 
   dlat = asin(dpn/R);
-  dlon = asin(dpe/(R*cos(dlat)));
+  dlon = asin(dpe/(R*cos(initial_latitude_*M_PI/180.0)));
 }
 
 
