@@ -168,8 +168,11 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       GPS_message_.speed = Vg + ground_speed_error;
 
       // Get Course Angle
-      double chi = atan2(v,u);
-      double sigma_chi = sqrt((u*u*north_stdev_*north_stdev_ + v*v*east_stdev_*east_stdev_)/((u*u+v*v)*(u*u+v*v)));
+      double psi = -W_pose_W_C.rot.GetAsEuler().z;
+      double dx = Vg*cos(psi);
+      double dy = Vg*sin(psi);
+      double chi = atan2(dy,dx);
+      double sigma_chi = sqrt((dx*dx*north_stdev_*north_stdev_ + dy*dy*east_stdev_*east_stdev_)/((dx*dx+dy*dy)*(dx*dx+dy*dy)));
       double chi_error = sigma_chi*standard_normal_distribution_(random_generator_);
       GPS_message_.ground_course = chi + chi_error;
 
