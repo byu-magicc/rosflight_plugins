@@ -10,9 +10,11 @@ endif()
 
 set(CMAKE_CXX_FLAGS "-fopenmp")
 
+find_package(gazebo)
+IF(gazebo_FOUND)
+
 # To enable assertions when compiled in release mode.
 add_definitions(-DROS_ASSERT_ENABLED)
-
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   tf
@@ -26,9 +28,7 @@ find_package(catkin REQUIRED COMPONENTS
   gazebo_ros
   gazebo_plugins
 )
-
 find_package(Eigen3 REQUIRED)
-find_package(gazebo REQUIRED)
 link_directories(${GAZEBO_LIBRARY_DIRS})
 
 catkin_package(
@@ -93,3 +93,4 @@ install(
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
+ENDIF()
