@@ -86,13 +86,13 @@ void ImuPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   acc_bias_topic_ = nh_private_.param<std::string>("acc_bias_topic", "imu/acc_bias");
   gyro_bias_topic_ = nh_private_.param<std::string>("gyro_bias_topic", "imu/gyro_bias");
 
-  gyro_stdev_ = nh_private_.param<double>("gyro_stdev", 0.13);
-  gyro_bias_range_ = nh_private_.param<double>("gyro_bias_range", 0.15);
-  gyro_bias_walk_stdev_ = nh_private_.param<double>("gyro_bias_walk_stdev", 0.001);
+  gyro_stdev_ = nh_private_.param<double>("gyro_stdev", 0.02);
+  gyro_bias_range_ = nh_private_.param<double>("gyro_bias_range", 0.001);
+  gyro_bias_walk_stdev_ = nh_private_.param<double>("gyro_bias_walk_stdev", 1e-6);
 
   acc_stdev_ = nh_private_.param<double>("acc_stdev", 1.15);
-  acc_bias_range_ = nh_private_.param<double>("acc_bias_range", 0.15);
-  acc_bias_walk_stdev_ = nh_private_.param<double>("acc_bias_walk_stdev", 0.001);
+  acc_bias_range_ = nh_private_.param<double>("acc_bias_range", 0.015);
+  acc_bias_walk_stdev_ = nh_private_.param<double>("acc_bias_walk_stdev", 1e-6);
 
   // ROS Publishers
   imu_pub_ = nh_.advertise<sensor_msgs::Imu>(imu_topic_, 10);
@@ -103,6 +103,7 @@ void ImuPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   sample_time_ = 1.0/pub_rate_;
 
   // Configure Noise
+  random_generator_.seed(std::time(nullptr));
   normal_distribution_ = std::normal_distribution<double>(0.0, 1.0);
   uniform_distribution_ = std::uniform_real_distribution<double>(-1.0, 1.0);
 
@@ -110,11 +111,13 @@ void ImuPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   if (!noise_on_)
   {
     gyro_stdev_ = 0;
+    gyro_bias_range_ = 0;
     gyro_bias_walk_stdev_ = 0;
     gyro_bias_.x = 0;
     gyro_bias_.y = 0;
     gyro_bias_.z = 0;
     acc_stdev_ = 0;
+    gyro_bias_range_ = 0;
     acc_bias_walk_stdev_ = 0;
     acc_bias_.x = 0;
     acc_bias_.y = 0;
