@@ -75,7 +75,7 @@ void MagnetometerPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr 
 
   // load params from rosparam server
   noise_on_ = nh_private_.param<bool>("noise_on", true);
-  mag_topic_ = nh_private_.param<std::string>("topic", "magnetometor");
+  mag_topic_ = nh_private_.param<std::string>("topic", "magnetometer");
   noise_sigma_ = nh_private_.param<double>("stdev", 0.01);
   bias_range_ = nh_private_.param<double>("bias_range", 0.01);
   pub_rate_ = nh_private_.param<double>("rate", 50.0);
