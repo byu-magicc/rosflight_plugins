@@ -117,7 +117,7 @@ void ImuPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
     gyro_bias_.y = 0;
     gyro_bias_.z = 0;
     acc_stdev_ = 0;
-    gyro_bias_range_ = 0;
+    acc_bias_range_ = 0;
     acc_bias_walk_stdev_ = 0;
     acc_bias_.x = 0;
     acc_bias_.y = 0;
