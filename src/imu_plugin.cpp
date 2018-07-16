@@ -157,7 +157,7 @@ void ImuPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
   gazebo::common::Time current_time = world_->GetSimTime();
   if ((current_time - last_time_).Double() >= sample_time_)
   {
-    gazebo::math::Quaternion q_I_NWU = link_->GetWorldPose().rot;
+    ignition::math::Quaterniond q_I_NWU = link_->GetWorldPose().rot;
     ignition::math::Vector3d omega_B_NWU = link_->GetRelativeAngularVel();
     ignition::math::Vector3d uvw_B_NWU = link_->GetRelativeLinearVel();
 
