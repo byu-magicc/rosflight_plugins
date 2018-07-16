@@ -105,7 +105,7 @@ void AirspeedPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf
 void AirspeedPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info) {
 
   // Calculate Airspeed
-  gazebo::math::Vector3 C_linear_velocity_W_C = link_->GetRelativeLinearVel();
+  ignition::math::Vector3d C_linear_velocity_W_C = link_->GetRelativeLinearVel();
   double u = C_linear_velocity_W_C.x;
   double v = -C_linear_velocity_W_C.y;
   double w = -C_linear_velocity_W_C.z;

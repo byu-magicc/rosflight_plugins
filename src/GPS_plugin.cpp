@@ -159,7 +159,7 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       GPS_message_.altitude = initial_altitude_ + h;
 
       // Get Ground Speed
-      gazebo::math::Vector3 C_linear_velocity_W_C = link_->GetRelativeLinearVel();
+      ignition::math::Vector3d C_linear_velocity_W_C = link_->GetRelativeLinearVel();
       double u = C_linear_velocity_W_C.x;
       double v = -C_linear_velocity_W_C.y;
       double Vg = sqrt(u*u + v*v);

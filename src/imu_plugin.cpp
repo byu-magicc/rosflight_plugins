@@ -158,12 +158,12 @@ void ImuPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
   if ((current_time - last_time_).Double() >= sample_time_)
   {
     gazebo::math::Quaternion q_I_NWU = link_->GetWorldPose().rot;
-    gazebo::math::Vector3 omega_B_NWU = link_->GetRelativeAngularVel();
-    gazebo::math::Vector3 uvw_B_NWU = link_->GetRelativeLinearVel();
+    ignition::math::Vector3d omega_B_NWU = link_->GetRelativeAngularVel();
+    ignition::math::Vector3d uvw_B_NWU = link_->GetRelativeLinearVel();
 
     // y_acc = F/m - R*g
-    gazebo::math::Vector3 y_acc = link_->GetRelativeForce()/mass_ - q_I_NWU.RotateVectorReverse(gravity_);
-    gazebo::math::Vector3 y_gyro = link_->GetRelativeAngularVel();
+    ignition::math::Vector3d y_acc = link_->GetRelativeForce()/mass_ - q_I_NWU.RotateVectorReverse(gravity_);
+    ignition::math::Vector3d y_gyro = link_->GetRelativeAngularVel();
 
     // Apply normal noise
     y_acc.x += acc_stdev_*normal_distribution_(random_generator_);

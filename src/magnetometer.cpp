@@ -130,16 +130,16 @@ void MagnetometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 
     gazebo::math::Pose I_to_B = link_->GetWorldPose();
 
-    gazebo::math::Vector3 noise;
+    ignition::math::Vector3d noise;
     noise.x = noise_sigma_*normal_dist_(random_gen_);
     noise.y = noise_sigma_*normal_dist_(random_gen_);
     noise.z = noise_sigma_*normal_dist_(random_gen_);
 
     // combine parts to create a measurement
-    gazebo::math::Vector3 measurement = I_to_B.rot.RotateVectorReverse(inertial_magnetic_field_) + noise + bias_vector_;
+    ignition::math::Vector3d measurement = I_to_B.rot.RotateVectorReverse(inertial_magnetic_field_) + noise + bias_vector_;
 
     // normalize measurement
-    gazebo::math::Vector3 normalized = measurement.Normalize();
+    ignition::math::Vector3d normalized = measurement.Normalize();
 
     mag_msg_.header.stamp.fromSec(world_->GetSimTime().Double());
     mag_msg_.magnetic_field.x =  normalized.x;

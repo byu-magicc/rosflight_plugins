@@ -62,8 +62,8 @@ namespace rosflight_plugins
     double inclination_;
     double declination_;
 
-    gazebo::math::Vector3 inertial_magnetic_field_;
-    gazebo::math::Vector3 bias_vector_;
+    ignition::math::Vector3d inertial_magnetic_field_;
+    ignition::math::Vector3d bias_vector_;
 
     sensor_msgs::MagneticField mag_msg_;
 

@@ -86,10 +86,10 @@ namespace rosflight_plugins
 
     sensor_msgs::Imu imu_message_;
 
-    gazebo::math::Vector3 gravity_;
+    ignition::math::Vector3d gravity_;
 
-    gazebo::math::Vector3 gyro_bias_;
-    gazebo::math::Vector3 acc_bias_;
+    ignition::math::Vector3d gyro_bias_;
+    ignition::math::Vector3d acc_bias_;
   };
 }
 
