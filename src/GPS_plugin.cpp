@@ -144,7 +144,7 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       alt_GPS_error_ = exp(-1.0*alt_k_GPS_*sample_time_)*alt_GPS_error_ + noise;
 
       // Find NED position in meters
-      gazebo::math::Pose W_pose_W_C = link_->GetWorldCoGPose();
+      ignition::math::Pose3d W_pose_W_C = link_->GetWorldCoGPose();
       double pn =  W_pose_W_C.pos.x + north_GPS_error_;
       double pe = -W_pose_W_C.pos.y + east_GPS_error_;
       double h  =  W_pose_W_C.pos.z + alt_GPS_error_;

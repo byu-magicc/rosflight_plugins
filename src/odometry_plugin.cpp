@@ -94,7 +94,7 @@ void OdometryPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf
 void OdometryPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info) {
   // C denotes child frame, P parent frame, and W world frame.
   // Further C_pose_W_P denotes pose of P wrt. W expressed in C.
-  gazebo::math::Pose inertial_pose = link_->GetWorldCoGPose();
+  ignition::math::Pose3d inertial_pose = link_->GetWorldCoGPose();
   ignition::math::Vector3d body_fixed_linear_velocity = link_->GetRelativeLinearVel();
   ignition::math::Vector3d body_fixed_angular_velocity = link_->GetRelativeAngularVel();
 

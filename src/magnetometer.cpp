@@ -128,7 +128,7 @@ void MagnetometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
   gazebo::common::Time current_time = world_->GetSimTime();
   if ((current_time - last_time_).Double() >= sample_time_) {
 
-    gazebo::math::Pose I_to_B = link_->GetWorldPose();
+    ignition::math::Pose3d I_to_B = link_->GetWorldPose();
 
     ignition::math::Vector3d noise;
     noise.x = noise_sigma_*normal_dist_(random_gen_);

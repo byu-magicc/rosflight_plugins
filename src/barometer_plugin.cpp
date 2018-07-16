@@ -103,7 +103,7 @@ void BarometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
   if ((current_time - last_time_).Double() >= sample_time_) {
 
     // pull z measurement out of Gazebo (ENU)
-    gazebo::math::Pose pose = link_->GetWorldPose();
+    ignition::math::Pose3d pose = link_->GetWorldPose();
 
     // Create a new barometer message
     rosflight_msgs::Barometer msg;
