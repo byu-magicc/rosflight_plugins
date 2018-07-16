@@ -23,7 +23,7 @@ ImuPlugin::ImuPlugin() : gazebo::ModelPlugin() { }
 
 ImuPlugin::~ImuPlugin()
 {
-  gazebo::event::Events::DisconnectWorldUpdateBegin(updateConnection_);
+  openConnection_.reset();
   nh_.shutdown();
 }
 

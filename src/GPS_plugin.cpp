@@ -25,7 +25,7 @@ GPSPlugin::GPSPlugin() : ModelPlugin() {}
 
 GPSPlugin::~GPSPlugin()
 {
-  gazebo::event::Events::DisconnectWorldUpdateBegin(updateConnection_);
+  updateConnection_.reset();
   nh_.shutdown();
 }
 
