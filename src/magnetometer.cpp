@@ -44,7 +44,7 @@ void MagnetometerPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr 
   model_ = _model;
   world_ = model_->GetWorld();
 
-  last_time_ = world_->GetSimTime();
+  last_time_ = world_->SimTime();
 
   namespace_.clear();
 
@@ -125,7 +125,7 @@ void MagnetometerPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr 
 void MagnetometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 {
   // check if time to publish
-  gazebo::common::Time current_time = world_->GetSimTime();
+  gazebo::common::Time current_time = world_->SimTime();
   if ((current_time - last_time_).Double() >= sample_time_) {
 
     ignition::math::Pose3d I_to_B = link_->GetWorldPose();
@@ -141,7 +141,7 @@ void MagnetometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
     // normalize measurement
     ignition::math::Vector3d normalized = measurement.Normalize();
 
-    mag_msg_.header.stamp.fromSec(world_->GetSimTime().Double());
+    mag_msg_.header.stamp.fromSec(world_->SimTime().Double());
     mag_msg_.magnetic_field.x =  normalized.x;
     mag_msg_.magnetic_field.y = -normalized.y; // convert to NED for publishing
     mag_msg_.magnetic_field.z = -normalized.z;

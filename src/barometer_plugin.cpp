@@ -44,7 +44,7 @@ void BarometerPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sd
   model_ = _model;
   world_ = model_->GetWorld();
 
-  last_time_ = world_->GetSimTime();
+  last_time_ = world_->SimTime();
 
   namespace_.clear();
   
@@ -99,7 +99,7 @@ void BarometerPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sd
 void BarometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 {
   // check if time to publish
-  gazebo::common::Time current_time = world_->GetSimTime();
+  gazebo::common::Time current_time = world_->SimTime();
   if ((current_time - last_time_).Double() >= sample_time_) {
 
     // pull z measurement out of Gazebo (ENU)
@@ -118,7 +118,7 @@ void BarometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
     msg.pressure = 101325.0*pow(1- (2.25577e-5 * msg.altitude), 5.25588);
 
     // publish message
-    msg.header.stamp.fromSec(world_->GetSimTime().Double());
+    msg.header.stamp.fromSec(world_->SimTime().Double());
     msg.header.frame_id = link_name_;
     alt_pub_.publish(msg);
 

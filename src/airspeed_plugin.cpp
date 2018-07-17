@@ -52,7 +52,7 @@ void AirspeedPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf
   model_ = _model;
   world_ = model_->GetWorld();
 
-  last_time_ = world_->GetSimTime();
+  last_time_ = world_->SimTime();
 
   namespace_.clear();
 

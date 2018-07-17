@@ -44,7 +44,7 @@ void ImuPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   model_ = _model;
   world_ = model_->GetWorld();
 
-  last_time_ = world_->GetSimTime();
+  last_time_ = world_->SimTime();
 
   namespace_.clear();
 
@@ -147,14 +147,14 @@ void ImuPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
 
 void ImuPlugin::Reset()
 {
-  last_time_ = world_->GetSimTime();
+  last_time_ = world_->SimTime();
 }
 
 // This gets called by the world update start event.
 void ImuPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 {
   // check if time to publish
-  gazebo::common::Time current_time = world_->GetSimTime();
+  gazebo::common::Time current_time = world_->SimTime();
   if ((current_time - last_time_).Double() >= sample_time_)
   {
     ignition::math::Quaterniond q_I_NWU = link_->GetWorldPose().rot;

@@ -100,8 +100,8 @@ void OdometryPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info) {
 
   nav_msgs::Odometry odometry_NED, odometry_NWU;
   geometry_msgs::TransformStamped transform_NED, transform_NWU;
-  odometry_NWU.header.stamp.sec = (world_->GetSimTime()).sec;
-  odometry_NWU.header.stamp.nsec = (world_->GetSimTime()).nsec;
+  odometry_NWU.header.stamp.sec = (world_->SimTime()).sec;
+  odometry_NWU.header.stamp.nsec = (world_->SimTime()).nsec;
   odometry_NWU.header.frame_id = "world_NWU";
   odometry_NWU.child_frame_id = namespace_;
 
@@ -132,8 +132,8 @@ void OdometryPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info) {
   transform_NWU_pub_.publish(transform_NWU);
 
   // Convert from NWU to NED
-  odometry_NED.header.stamp.sec = (world_->GetSimTime()).sec;
-  odometry_NED.header.stamp.nsec = (world_->GetSimTime()).nsec;
+  odometry_NED.header.stamp.sec = (world_->SimTime()).sec;
+  odometry_NED.header.stamp.nsec = (world_->SimTime()).nsec;
   odometry_NED.header.frame_id = "world_NED";
   odometry_NED.child_frame_id = namespace_;
   odometry_NED.pose.pose.position.x = inertial_pose.pos.x;
