@@ -25,7 +25,11 @@ GPSPlugin::GPSPlugin() : ModelPlugin() {}
 
 GPSPlugin::~GPSPlugin()
 {
+#if GAZEBO_MAJOR_VERSION >= 8
   updateConnection_.reset();
+#else
+  gazebo::event::Events::DisconnectWorldUpdateBegin(updateConnection_);
+#endif
   nh_.shutdown();
 }
 
@@ -46,7 +50,11 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   model_ = _model;
   world_ = model_->GetWorld();
 
+#if GAZEBO_MAJOR_VERSION >=8
   last_time_ = world_->SimTime();
+#else
+  last_time_ = world_->GetSimTime();
+#endif
 
   namespace_.clear();
 
@@ -130,7 +138,11 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
 void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 {
   // check if time to publish
+#if GAZEBO_MAJOR_VERSION >=8
   gazebo::common::Time current_time = world_->SimTime();
+#else
+  gazebo::common::Time current_time = world_->GetSimTime();
+#endif
   if ((current_time - last_time_).Double() >= sample_time_) {
 
       // Add noise per Gauss-Markov Process (p. 139 UAV Book)
