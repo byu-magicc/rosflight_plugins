@@ -156,7 +156,11 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       alt_GPS_error_ = exp(-1.0*alt_k_GPS_*sample_time_)*alt_GPS_error_ + noise;
 
       // Find NED position in meters
+#if GAZEBO_MAJOR_VERSION >= 8
       ignition::math::Pose3d W_pose_W_C = link_->GetWorldCoGPose();
+#else
+      gazebo::math::Pose W_pose_W_C = link_->GetWorldCoGPose();
+#endif
       double pn =  W_pose_W_C.pos.x + north_GPS_error_;
       double pe = -W_pose_W_C.pos.y + east_GPS_error_;
       double h  =  W_pose_W_C.pos.z + alt_GPS_error_;
@@ -171,7 +175,11 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       GPS_message_.altitude = initial_altitude_ + h;
 
       // Get Ground Speed
+#if GAZEBO_MAJOR_VERSION >= 8
       ignition::math::Vector3d C_linear_velocity_W_C = link_->GetRelativeLinearVel();
+#else
+      gazebo::math::Vector3 C_linear_velocity_W_C = link_->GetRelativeLinearVel();
+#endif
       double u = C_linear_velocity_W_C.x;
       double v = -C_linear_velocity_W_C.y;
       double Vg = sqrt(u*u + v*v);
@@ -189,7 +197,11 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       GPS_message_.ground_course = chi + chi_error;
 
       // Publish
+#if GAZEBO_MAJOR_VERSION >=8
       GPS_message_.header.stamp.fromSec(world_->SimTime().Double());
+#else
+      GPS_message_.header.stamp.fromSec(world_->GetSimTime().Double());
+#endif
       GPS_pub_.publish(GPS_message_);
 
       last_time_ = current_time;

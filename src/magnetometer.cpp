@@ -23,7 +23,11 @@ MagnetometerPlugin::MagnetometerPlugin() : ModelPlugin() {}
 
 
 MagnetometerPlugin::~MagnetometerPlugin() {
+#if GAZEBO_MAJOR_VERSION >= 8
   updateConnection_.reset();
+#else
+  gazebo::event::Events::DisconnectWorldUpdateBegin(updateConnection_);
+#endif
   nh_.shutdown();
 }
 
@@ -44,7 +48,11 @@ void MagnetometerPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr 
   model_ = _model;
   world_ = model_->GetWorld();
 
+#if GAZEBO_MAJOR_VERSION >= 8
   last_time_ = world_->SimTime();
+#else
+  last_time_ = world_->GetSimTime();
+#endif
 
   namespace_.clear();
 
@@ -125,12 +133,18 @@ void MagnetometerPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr 
 void MagnetometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 {
   // check if time to publish
+#if GAZEBO_MAJOR_VERSION >= 8
   gazebo::common::Time current_time = world_->SimTime();
+#else
+  gazebo::common::Time current_time = world_->GetSimTime();
+#endif
   if ((current_time - last_time_).Double() >= sample_time_) {
 
+#if GAZEBO_MAJOR_VERSION >= 8
     ignition::math::Pose3d I_to_B = link_->GetWorldPose();
 
     ignition::math::Vector3d noise;
+    //TODO fix this for gazebo 8+
     noise.x = noise_sigma_*normal_dist_(random_gen_);
     noise.y = noise_sigma_*normal_dist_(random_gen_);
     noise.z = noise_sigma_*normal_dist_(random_gen_);
@@ -142,9 +156,29 @@ void MagnetometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
     ignition::math::Vector3d normalized = measurement.Normalize();
 
     mag_msg_.header.stamp.fromSec(world_->SimTime().Double());
+    //TODO fix this for Gazebo 8+
     mag_msg_.magnetic_field.x =  normalized.x;
     mag_msg_.magnetic_field.y = -normalized.y; // convert to NED for publishing
     mag_msg_.magnetic_field.z = -normalized.z;
+#else
+    gazebo::math::Pose I_to_B = link_->GetWorldPose();
+
+    gazebo::math::Vector3 noise;
+    noise.x = noise_sigma_*normal_dist_(random_gen_);
+    noise.y = noise_sigma_*normal_dist_(random_gen_);
+    noise.z = noise_sigma_*normal_dist_(random_gen_);
+
+    // combine parts to create a measurement
+    gazebo::math::Vector3 measurement = I_to_B.rot.RotateVectorReverse(inertial_magnetic_field_) + noise + bias_vector_;
+
+    // normalize measurement
+    gazebo::math::Vector3 normalized = measurement.Normalize();
+
+    mag_msg_.header.stamp.fromSec(world_->GetSimTime().Double())
+    mag_msg_.magnetic_field.x =  normalized.x;
+    mag_msg_.magnetic_field.y = -normalized.y; // convert to NED for publishing
+    mag_msg_.magnetic_field.z = -normalized.z;
+#endif
 
     mag_pub_.publish(mag_msg_);
 

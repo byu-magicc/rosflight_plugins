@@ -147,16 +147,25 @@ void ImuPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
 
 void ImuPlugin::Reset()
 {
+#if GAZEBO_MAJOR_VERSION >= 8
   last_time_ = world_->SimTime();
+#else
+  last_time_ = world_->GetSimTime();
+#endif
 }
 
 // This gets called by the world update start event.
 void ImuPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 {
   // check if time to publish
+#if GAZEBO_MAJOR_VERSION >= 8
   gazebo::common::Time current_time = world_->SimTime();
+#else
+  gazebo::common::Time current_time = world_->GetSimTime();
+#endif
   if ((current_time - last_time_).Double() >= sample_time_)
   {
+#if GAZEBO_MAJOR_VERSION >= 8
     ignition::math::Quaterniond q_I_NWU = link_->GetWorldPose().rot;
     ignition::math::Vector3d omega_B_NWU = link_->GetRelativeAngularVel();
     ignition::math::Vector3d uvw_B_NWU = link_->GetRelativeLinearVel();
@@ -164,6 +173,15 @@ void ImuPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
     // y_acc = F/m - R*g
     ignition::math::Vector3d y_acc = link_->GetRelativeForce()/mass_ - q_I_NWU.RotateVectorReverse(gravity_);
     ignition::math::Vector3d y_gyro = link_->GetRelativeAngularVel();
+#else
+    gazebo::math::Quaternion q_I_NWU = link_->GetWorldPose().rot;
+    gazebo::math::Vector3 omega_B_NWU = link_->GetRelativeAngularVel();
+    gazebo::math::Vector3 uvw_B_NWU = link_->GetRelativeLinearVel()
+
+    // y_acc = F/m - R*g
+    gazebo::math::Vector3 y_acc = link_->GetRelativeForce()/mass_ - q_I_NWU.RotateVectorReverse(gravity_);
+    gazebo::math::Vector3 y_gyro = link_->GetRelativeAngularVel();
+#endif
 
     // Apply normal noise
     y_acc.x += acc_stdev_*normal_distribution_(random_generator_);

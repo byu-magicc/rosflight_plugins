@@ -94,6 +94,7 @@ void OdometryPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf
 void OdometryPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info) {
   // C denotes child frame, P parent frame, and W world frame.
   // Further C_pose_W_P denotes pose of P wrt. W expressed in C.
+#if GAZEBO_MAJOR_VERSION >= 8
   ignition::math::Pose3d inertial_pose = link_->GetWorldCoGPose();
   ignition::math::Vector3d body_fixed_linear_velocity = link_->GetRelativeLinearVel();
   ignition::math::Vector3d body_fixed_angular_velocity = link_->GetRelativeAngularVel();
@@ -102,6 +103,16 @@ void OdometryPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info) {
   geometry_msgs::TransformStamped transform_NED, transform_NWU;
   odometry_NWU.header.stamp.sec = (world_->SimTime()).sec;
   odometry_NWU.header.stamp.nsec = (world_->SimTime()).nsec;
+#else
+  gazebo::math::Pose inertial_pose = link_->GetWorldCoGPose();
+  gazebo::math::Vector3 body_fixed_linear_velocity = link_->GetRelativeLinearVel();
+  gazebo::math::Vector3 body_fixed_angular_velocity = link_->GetRelativeAngularVel();
+
+  nav_msgs::Odometry odometry_NED, odometry_NWU;
+  geometry_msgs::TransformStamped transform_NED, transform_NWU;
+  odometry_NWU.header.stamp.sec = (world_->GetSimTime()).sec;
+  odometry_NWU.header.stamp.nsec = (world_->GetSimTime()).nsec
+#endif
   odometry_NWU.header.frame_id = "world_NWU";
   odometry_NWU.child_frame_id = namespace_;
 
@@ -132,8 +143,13 @@ void OdometryPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info) {
   transform_NWU_pub_.publish(transform_NWU);
 
   // Convert from NWU to NED
+#if GAZEBO_MAJOR_VERSION >= 8
   odometry_NED.header.stamp.sec = (world_->SimTime()).sec;
   odometry_NED.header.stamp.nsec = (world_->SimTime()).nsec;
+#else
+  odometry_NED.header.stamp.sec = (world_->GetSimTime()).sec;
+  odometry_NED.header.stamp.nsec = (world_->GetSimTime()).nsec;
+#endif
   odometry_NED.header.frame_id = "world_NED";
   odometry_NED.child_frame_id = namespace_;
   odometry_NED.pose.pose.position.x = inertial_pose.pos.x;
