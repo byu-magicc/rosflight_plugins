@@ -23,7 +23,11 @@ ImuPlugin::ImuPlugin() : gazebo::ModelPlugin() { }
 
 ImuPlugin::~ImuPlugin()
 {
+#if GAZEBO_MAJOR_VERSION >= 8
   updateConnection_.reset();
+#else
+  gazebo::event::Events::DisconnectWorldUpdateBegin(updateConnection_);
+#endif
   nh_.shutdown();
 }
 
@@ -44,7 +48,11 @@ void ImuPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   model_ = _model;
   world_ = model_->GetWorld();
 
+#if GAZEBO_MAJOR_VERSION >= 8
   last_time_ = world_->SimTime();
+#else
+  last_time_ = world_->GetSimTime();
+#endif
 
   namespace_.clear();
 
