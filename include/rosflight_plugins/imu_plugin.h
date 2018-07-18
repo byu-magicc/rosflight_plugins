@@ -95,7 +95,7 @@ namespace rosflight_plugins
     gazebo::math::Vector3 gravity_;
 
     gazebo::math::Vector3 gyro_bias_;
-    gazebo::math::Vector3 acc_bias_
+    gazebo::math::Vector3 acc_bias_;
 #endif
   };
 }

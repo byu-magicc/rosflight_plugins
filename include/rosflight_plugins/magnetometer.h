@@ -67,7 +67,7 @@ namespace rosflight_plugins
     ignition::math::Vector3d bias_vector_;
 #else
     gazebo::math::Vector3 inertial_magnetic_field_;
-    gazebo::math::Vector3 bias_vector_
+    gazebo::math::Vector3 bias_vector_;
 #endif
 
     sensor_msgs::MagneticField mag_msg_;
