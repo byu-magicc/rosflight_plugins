@@ -184,7 +184,7 @@ void ImuPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 #else
     gazebo::math::Quaternion q_I_NWU = link_->GetWorldPose().rot;
     gazebo::math::Vector3 omega_B_NWU = link_->GetRelativeAngularVel();
-    gazebo::math::Vector3 uvw_B_NWU = link_->GetRelativeLinearVel()
+    gazebo::math::Vector3 uvw_B_NWU = link_->GetRelativeLinearVel();
 
     // y_acc = F/m - R*g
     gazebo::math::Vector3 y_acc = link_->GetRelativeForce()/mass_ - q_I_NWU.RotateVectorReverse(gravity_);

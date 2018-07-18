@@ -174,7 +174,7 @@ void MagnetometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
     // normalize measurement
     gazebo::math::Vector3 normalized = measurement.Normalize();
 
-    mag_msg_.header.stamp.fromSec(world_->GetSimTime().Double())
+    mag_msg_.header.stamp.fromSec(world_->GetSimTime().Double());
     mag_msg_.magnetic_field.x =  normalized.x;
     mag_msg_.magnetic_field.y = -normalized.y; // convert to NED for publishing
     mag_msg_.magnetic_field.z = -normalized.z;

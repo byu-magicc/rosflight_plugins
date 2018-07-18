@@ -111,7 +111,7 @@ void OdometryPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info) {
   nav_msgs::Odometry odometry_NED, odometry_NWU;
   geometry_msgs::TransformStamped transform_NED, transform_NWU;
   odometry_NWU.header.stamp.sec = (world_->GetSimTime()).sec;
-  odometry_NWU.header.stamp.nsec = (world_->GetSimTime()).nsec
+  odometry_NWU.header.stamp.nsec = (world_->GetSimTime()).nsec;
 #endif
   odometry_NWU.header.frame_id = "world_NWU";
   odometry_NWU.child_frame_id = namespace_;
