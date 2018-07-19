@@ -23,7 +23,11 @@ BarometerPlugin::BarometerPlugin() : gazebo::ModelPlugin() { }
 
 BarometerPlugin::~BarometerPlugin()
 {
+#if GAZEBO_MAJOR_VERSION >=8
+  updateConnection_.reset();
+#else
   gazebo::event::Events::DisconnectWorldUpdateBegin(updateConnection_);
+#endif
   nh_.shutdown();
 }
 
@@ -112,14 +116,18 @@ void BarometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 
     // pull z measurement out of Gazebo (ENU)
 #if GAZEBO_MAJOR_VERSION >= 8
-    ignition::math::Pose3d pose = link_->GetWorldPose();
+    ignition::math::Pose3d pose = link_->WorldPose();
 #else
     gazebo::math::Pose pose = link_->GetWorldPose();
 #endif
 
     // Create a new barometer message
     rosflight_msgs::Barometer msg;
+#if GAZEBO_MAJOR_VERSION >=8
+    msg.altitude = pose.Pos().Z();
+#else
     msg.altitude = pose.pos.z;
+#endif
 
     // if requested add noise to altitude measurement
     if (noise_on_)
