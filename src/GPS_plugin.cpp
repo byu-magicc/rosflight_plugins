@@ -194,7 +194,7 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 
       // Get Course Angle
 #if GAZEBO_MAJOR_VERSION >=8
-      double psi = -W_pose_W_C.Rot().GetAsEuler().Z();
+      double psi = -W_pose_W_C.Rot().Euler().Z();
 #else
       double psi = -W_pose_W_C.rot.GetAsEuler().z;
 #endif
