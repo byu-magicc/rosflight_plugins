@@ -58,7 +58,7 @@ void ImuPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
 
 
 #if GAZEBO_MAJOR_VERSION >=8
-  gravity_ = world_->Physics()->Gravity();
+  gravity_ = world_->Gravity();
 #else
   gravity_ = world_->GetPhysicsEngine()->GetGravity();
 #endif
