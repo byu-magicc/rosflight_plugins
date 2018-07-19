@@ -156,14 +156,17 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       alt_GPS_error_ = exp(-1.0*alt_k_GPS_*sample_time_)*alt_GPS_error_ + noise;
 
       // Find NED position in meters
-#if GAZEBO_MAJOR_VERSION >= 8
-      ignition::math::Pose3d W_pose_W_C = link_->GetWorldCoGPose();
+#if GAZEBO_MAJOR_VERSION >=8
+      ignition::math::Pose3d W_pose_W_C = link_->WorldCoGPose();
+      double pn =  W_pose_W_C.Pos().X() + north_GPS_error_;
+      double pe = -W_pose_W_C.Pos().Y() + east_GPS_error_;
+      double h  =  W_pose_W_C.Pos().Z() + alt_GPS_error_;
 #else
       gazebo::math::Pose W_pose_W_C = link_->GetWorldCoGPose();
-#endif
       double pn =  W_pose_W_C.pos.x + north_GPS_error_;
       double pe = -W_pose_W_C.pos.y + east_GPS_error_;
       double h  =  W_pose_W_C.pos.z + alt_GPS_error_;
+#endif
 
       // Convert meters to GPS angle
       double dlat, dlon;
@@ -175,20 +178,26 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       GPS_message_.altitude = initial_altitude_ + h;
 
       // Get Ground Speed
-#if GAZEBO_MAJOR_VERSION >= 8
-      ignition::math::Vector3d C_linear_velocity_W_C = link_->GetRelativeLinearVel();
+#if GAZEBO_MAJOR_VERSION >=8
+      ignition::math::Vector3d C_linear_velocity_W_C = link_->RelativeLinearVel();
+      double u = C_linear_velocity_W_C.X();
+      double v = -C_linear_velocity_W_C.Y();
 #else
       gazebo::math::Vector3 C_linear_velocity_W_C = link_->GetRelativeLinearVel();
-#endif
       double u = C_linear_velocity_W_C.x;
       double v = -C_linear_velocity_W_C.y;
+#endif
       double Vg = sqrt(u*u + v*v);
       double sigma_vg = sqrt((u*u*north_stdev_*north_stdev_ + v*v*east_stdev_*east_stdev_)/(u*u + v*v));
       double ground_speed_error = sigma_vg*standard_normal_distribution_(random_generator_);
       GPS_message_.speed = Vg + ground_speed_error;
 
       // Get Course Angle
+#if GAZEBO_MAJOR_VERSION >=8
+      double psi = -W_pose_W_C.Rot().GetAsEuler().Z();
+#else
       double psi = -W_pose_W_C.rot.GetAsEuler().z;
+#endif
       double dx = Vg*cos(psi);
       double dy = Vg*sin(psi);
       double chi = atan2(dy,dx);
