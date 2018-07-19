@@ -23,7 +23,11 @@ namespace rosflight_plugins
 AirspeedPlugin::AirspeedPlugin() : ModelPlugin() {}
 
 AirspeedPlugin::~AirspeedPlugin() {
+#if GAZEBO_MAJOR_VERSION >=8
+  updateConnection_.reset();
+#else
   gazebo::event::Events::DisconnectWorldUpdateBegin(updateConnection_);
+#endif
   nh_.shutdown();
 }
 
@@ -116,7 +120,7 @@ void AirspeedPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info) {
 
   // Calculate Airspeed
 #if GAZEBO_MAJOR_VERSION >= 8
-  ignition::math::Vector3d C_linear_velocity_W_C = link_->GetRelativeLinearVel();
+  ignition::math::Vector3d C_linear_velocity_W_C = link_->RelativeLinearVel();
   double u = C_linear_velocity_W_C.X();
   double v = -C_linear_velocity_W_C.Y();
   double w = -C_linear_velocity_W_C.Z();
