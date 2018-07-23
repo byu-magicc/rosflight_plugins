@@ -299,7 +299,7 @@ void ImuPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
     imu_message_.angular_velocity.y = -y_gyro.Y();
     imu_message_.angular_velocity.z = -y_gyro.Z();
 #else
-    imu_message_.orientation.w = q_I_NWU.W;
+    imu_message_.orientation.w = q_I_NWU.w;
     imu_message_.orientation.x = q_I_NWU.x;
     imu_message_.orientation.y = -q_I_NWU.y;
     imu_message_.orientation.z = -q_I_NWU.z;
