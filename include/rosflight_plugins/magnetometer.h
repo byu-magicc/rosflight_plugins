@@ -31,6 +31,11 @@
 
 #include <sensor_msgs/MagneticField.h>
 
+#if GAZEBO_MAJOR_VERSION >= 8
+#define GazeboVector ignition::math::Vector3d
+#else
+#define GazeboVector gazebo::math::Vector3
+#endif
 
 namespace rosflight_plugins
 {
@@ -62,13 +67,8 @@ namespace rosflight_plugins
     double inclination_;
     double declination_;
 
-#if GAZEBO_MAJOR_VERSION >=8
-    ignition::math::Vector3d inertial_magnetic_field_;
-    ignition::math::Vector3d bias_vector_;
-#else
-    gazebo::math::Vector3 inertial_magnetic_field_;
-    gazebo::math::Vector3 bias_vector_;
-#endif
+    GazeboVector inertial_magnetic_field_;
+    GazeboVector bias_vector_;
 
     sensor_msgs::MagneticField mag_msg_;
 
