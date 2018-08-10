@@ -190,91 +190,48 @@ void ImuPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
 
 void ImuPlugin::Reset()
 {
-#if GAZEBO_MAJOR_VERSION >= 8
-  last_time_ = world_->SimTime();
-#else
-  last_time_ = world_->GetSimTime();
-#endif
+  last_time_ = GET_SIM_TIME(world_);
 }
 
 // This gets called by the world update start event.
 void ImuPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 {
   // check if time to publish
-#if GAZEBO_MAJOR_VERSION >= 8
-  gazebo::common::Time current_time = world_->SimTime();
-#else
-  gazebo::common::Time current_time = world_->GetSimTime();
-#endif
+  gazebo::common::Time current_time = GET_SIM_TIME(world_);
   if ((current_time - last_time_).Double() >= sample_time_)
   {
-#if GAZEBO_MAJOR_VERSION >= 8
-    ignition::math::Quaterniond q_I_NWU = link_->WorldPose().Rot();
-    ignition::math::Vector3d omega_B_NWU = link_->RelativeAngularVel();
-    ignition::math::Vector3d uvw_B_NWU = link_->RelativeLinearVel();
+    GazeboQuaternion q_I_NWU = GET_ROT(GET_WORLD_POSE(link_));
+    GazeboVector omega_B_NWU = GET_RELATIVE_ANGULAR_VEL(link_);
+    GazeboVector uvw_B_NWU = GET_RELATIVE_LINEAR_VEL(link_);
 
     // y_acc = F/m - R*g
-    ignition::math::Vector3d y_acc = link_->RelativeForce()/mass_ - q_I_NWU.RotateVectorReverse(gravity_);
-    ignition::math::Vector3d y_gyro = link_->RelativeAngularVel();
+    GazeboVector y_acc = GET_RELATIVE_FORCE(link_)/mass_ - q_I_NWU.RotateVectorReverse(gravity_);
+    GazeboVector y_gyro = GET_RELATIVE_ANGULAR_VEL(link_);
 
     // Apply normal noise
-    y_acc.X(y_acc.X() + acc_stdev_*normal_distribution_(random_generator_));
-    y_acc.Y(y_acc.Y() + acc_stdev_*normal_distribution_(random_generator_));
-    y_acc.Z(y_acc.Z() + acc_stdev_*normal_distribution_(random_generator_));
-    y_gyro.X(y_gyro.X() + gyro_stdev_*normal_distribution_(random_generator_));
-    y_gyro.Y(y_gyro.Y() + gyro_stdev_*normal_distribution_(random_generator_));
-    y_gyro.Z(y_gyro.Z() + gyro_stdev_*normal_distribution_(random_generator_));
+    SET_X(y_acc,GET_X(y_acc) + acc_stdev_*normal_distribution_(random_generator_));
+    SET_Y(y_acc,GET_Y(y_acc) + acc_stdev_*normal_distribution_(random_generator_));
+    SET_Z(y_acc,GET_Z(y_acc) + acc_stdev_*normal_distribution_(random_generator_));
+    SET_X(y_gyro,GET_X(y_gyro) + gyro_stdev_*normal_distribution_(random_generator_));
+    SET_Y(y_gyro,GET_Y(y_gyro) + gyro_stdev_*normal_distribution_(random_generator_));
+    SET_Z(y_gyro,GET_Z(y_gyro) + gyro_stdev_*normal_distribution_(random_generator_));
 
     // Perform Random Walk for biases
-    acc_bias_.X(acc_bias_.X() + acc_bias_walk_stdev_*normal_distribution_(random_generator_));
-    acc_bias_.Y(acc_bias_.Y() + acc_bias_walk_stdev_*normal_distribution_(random_generator_));
-    acc_bias_.Z(acc_bias_.Z() + acc_bias_walk_stdev_*normal_distribution_(random_generator_));
-    gyro_bias_.X(gyro_bias_.X() + gyro_bias_walk_stdev_*normal_distribution_(random_generator_));
-    gyro_bias_.Y(gyro_bias_.Y() + gyro_bias_walk_stdev_*normal_distribution_(random_generator_));
-    gyro_bias_.Z(gyro_bias_.Z() + gyro_bias_walk_stdev_*normal_distribution_(random_generator_));
-#else
-    gazebo::math::Quaternion q_I_NWU = link_->GetWorldPose().rot;
-    gazebo::math::Vector3 omega_B_NWU = link_->GetRelativeAngularVel();
-    gazebo::math::Vector3 uvw_B_NWU = link_->GetRelativeLinearVel();
-
-    // y_acc = F/m - R*g
-    gazebo::math::Vector3 y_acc = link_->GetRelativeForce()/mass_ - q_I_NWU.RotateVectorReverse(gravity_);
-    gazebo::math::Vector3 y_gyro = link_->GetRelativeAngularVel();
-
-    // Apply normal noise
-    y_acc.x += acc_stdev_*normal_distribution_(random_generator_);
-    y_acc.y += acc_stdev_*normal_distribution_(random_generator_);
-    y_acc.z += acc_stdev_*normal_distribution_(random_generator_);
-    y_gyro.x += gyro_stdev_*normal_distribution_(random_generator_);
-    y_gyro.y += gyro_stdev_*normal_distribution_(random_generator_);
-    y_gyro.z += gyro_stdev_*normal_distribution_(random_generator_);
-
-    // Perform Random Walk for biases
-    acc_bias_.x += acc_bias_walk_stdev_*normal_distribution_(random_generator_);
-    acc_bias_.y += acc_bias_walk_stdev_*normal_distribution_(random_generator_);
-    acc_bias_.z += acc_bias_walk_stdev_*normal_distribution_(random_generator_);
-    gyro_bias_.x += gyro_bias_walk_stdev_*normal_distribution_(random_generator_);
-    gyro_bias_.y += gyro_bias_walk_stdev_*normal_distribution_(random_generator_);
-    gyro_bias_.z += gyro_bias_walk_stdev_*normal_distribution_(random_generator_);
-#endif
+    SET_X(acc_bias_,GET_X(acc_bias_) + acc_bias_walk_stdev_*normal_distribution_(random_generator_));
+    SET_Y(acc_bias_,GET_Y(acc_bias_) + acc_bias_walk_stdev_*normal_distribution_(random_generator_));
+    SET_Z(acc_bias_,GET_Z(acc_bias_) + acc_bias_walk_stdev_*normal_distribution_(random_generator_));
+    SET_X(gyro_bias_,GET_X(gyro_bias_) + gyro_bias_walk_stdev_*normal_distribution_(random_generator_));
+    SET_Y(gyro_bias_,GET_Y(gyro_bias_) + gyro_bias_walk_stdev_*normal_distribution_(random_generator_));
+    SET_Z(gyro_bias_,GET_Z(gyro_bias_) + gyro_bias_walk_stdev_*normal_distribution_(random_generator_));
 
 
     // Add constant Bias to measurement
-#if GAZEBO_MAJOR_VERSION >= 8
-    y_acc.X(y_acc.X() + acc_bias_.X());
-    y_acc.Y(y_acc.Y() + acc_bias_.Y());
-    y_acc.Z(y_acc.Z() + acc_bias_.Z());
-    y_gyro.X(y_gyro.X() + gyro_bias_.X());
-    y_gyro.Y(y_gyro.Y() + gyro_bias_.Y());
-    y_gyro.Z(y_gyro.Z() + gyro_bias_.Z());
-#else
-    y_acc.x += acc_bias_.x;
-    y_acc.y += acc_bias_.y;
-    y_acc.z += acc_bias_.z;
-    y_gyro.x += gyro_bias_.x;
-    y_gyro.y += gyro_bias_.y;
-    y_gyro.z += gyro_bias_.z;
-#endif
+    SET_X(y_acc,GET_X(y_acc) + GET_X(acc_bias_));
+    SET_Y(y_acc,GET_Y(y_acc) + GET_Y(acc_bias_));
+    SET_Z(y_acc,GET_Z(y_acc) + GET_Z(acc_bias_));
+    SET_X(y_gyro,GET_X(y_gyro) + GET_X(gyro_bias_));
+    SET_Y(y_gyro,GET_Y(y_gyro) + GET_Y(gyro_bias_));
+    SET_Z(y_gyro,GET_Z(y_gyro) + GET_Z(gyro_bias_));
 
     // Set Time stamp
     imu_message_.header.stamp.sec = current_time.sec;
@@ -286,31 +243,17 @@ void ImuPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
     imu_message_.orientation.y = 0;
     imu_message_.orientation.z = 0;
 
-#if GAZEBO_MAJOR_VERSION >= 8
-    imu_message_.orientation.w = q_I_NWU.W();
-    imu_message_.orientation.x = q_I_NWU.X();
-    imu_message_.orientation.y = -q_I_NWU.Y();
-    imu_message_.orientation.z = -q_I_NWU.Z();
+    imu_message_.orientation.w = GET_W(q_I_NWU);
+    imu_message_.orientation.x = GET_X(q_I_NWU);
+    imu_message_.orientation.y = -GET_Y(q_I_NWU);
+    imu_message_.orientation.z = -GET_Z(q_I_NWU);
 
-    imu_message_.linear_acceleration.x = y_acc.X();
-    imu_message_.linear_acceleration.y = -y_acc.Y();
-    imu_message_.linear_acceleration.z = -y_acc.Z();
-    imu_message_.angular_velocity.x = y_gyro.X();
-    imu_message_.angular_velocity.y = -y_gyro.Y();
-    imu_message_.angular_velocity.z = -y_gyro.Z();
-#else
-    imu_message_.orientation.w = q_I_NWU.w;
-    imu_message_.orientation.x = q_I_NWU.x;
-    imu_message_.orientation.y = -q_I_NWU.y;
-    imu_message_.orientation.z = -q_I_NWU.z;
-
-    imu_message_.linear_acceleration.x = y_acc.x;
-    imu_message_.linear_acceleration.y = -y_acc.y;
-    imu_message_.linear_acceleration.z = -y_acc.z;
-    imu_message_.angular_velocity.x = y_gyro.x;
-    imu_message_.angular_velocity.y = -y_gyro.y;
-    imu_message_.angular_velocity.z = -y_gyro.z;
-#endif
+    imu_message_.linear_acceleration.x = GET_X(y_acc);
+    imu_message_.linear_acceleration.y = -GET_Y(y_acc);
+    imu_message_.linear_acceleration.z = -GET_Z(y_acc);
+    imu_message_.angular_velocity.x = GET_X(y_gyro);
+    imu_message_.angular_velocity.y = -GET_Y(y_gyro);
+    imu_message_.angular_velocity.z = -GET_Z(y_gyro);
 
     imu_pub_.publish(imu_message_);
 
@@ -321,31 +264,17 @@ void ImuPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
     acc_bias_msg.header = imu_message_.header;
     gyro_bias_msg.header = imu_message_.header;
 
-#if GAZEBO_MAJOR_VERSION >= 8
     // Convert Bias to NED
-    acc_bias_msg.vector.x = acc_bias_.X();
-    acc_bias_msg.vector.y = -acc_bias_.Y();
-    acc_bias_msg.vector.z = -acc_bias_.Z();
+    acc_bias_msg.vector.x = GET_X(acc_bias_);
+    acc_bias_msg.vector.y = -GET_Y(acc_bias_);
+    acc_bias_msg.vector.z = -GET_Z(acc_bias_);
     acc_bias_pub_.publish(acc_bias_msg);
 
     // Convert Bias to NED
-    gyro_bias_msg.vector.x = gyro_bias_.X();
-    gyro_bias_msg.vector.y = -gyro_bias_.Y();
-    gyro_bias_msg.vector.z = -gyro_bias_.Z();
+    gyro_bias_msg.vector.x = GET_X(gyro_bias_);
+    gyro_bias_msg.vector.y = -GET_Y(gyro_bias_);
+    gyro_bias_msg.vector.z = -GET_Z(gyro_bias_);
     gyro_bias_pub_.publish(gyro_bias_msg);
-#else
-    // Convert Bias to NED
-    acc_bias_msg.vector.x = acc_bias_.x;
-    acc_bias_msg.vector.y = -acc_bias_.y;
-    acc_bias_msg.vector.z = -acc_bias_.z;
-    acc_bias_pub_.publish(acc_bias_msg);
-
-    // Convert Bias to NED
-    gyro_bias_msg.vector.x = gyro_bias_.x;
-    gyro_bias_msg.vector.y = -gyro_bias_.y;
-    gyro_bias_msg.vector.z = -gyro_bias_.z;
-    gyro_bias_pub_.publish(gyro_bias_msg);
-#endif
   }
 }
 
