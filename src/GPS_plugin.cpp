@@ -50,11 +50,7 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   model_ = _model;
   world_ = model_->GetWorld();
 
-#if GAZEBO_MAJOR_VERSION >=8
-  last_time_ = world_->SimTime();
-#else
-  last_time_ = world_->GetSimTime();
-#endif
+  last_time_ = GET_SIM_TIME(world_);
 
   namespace_.clear();
 
@@ -138,11 +134,7 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
 void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 {
   // check if time to publish
-#if GAZEBO_MAJOR_VERSION >=8
-  gazebo::common::Time current_time = world_->SimTime();
-#else
-  gazebo::common::Time current_time = world_->GetSimTime();
-#endif
+  gazebo::common::Time current_time = GET_SIM_TIME(world_);
   if ((current_time - last_time_).Double() >= sample_time_) {
 
       // Add noise per Gauss-Markov Process (p. 139 UAV Book)
@@ -156,17 +148,10 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       alt_GPS_error_ = exp(-1.0*alt_k_GPS_*sample_time_)*alt_GPS_error_ + noise;
 
       // Find NED position in meters
-#if GAZEBO_MAJOR_VERSION >=8
-      ignition::math::Pose3d W_pose_W_C = link_->WorldCoGPose();
-      double pn =  W_pose_W_C.Pos().X() + north_GPS_error_;
-      double pe = -W_pose_W_C.Pos().Y() + east_GPS_error_;
-      double h  =  W_pose_W_C.Pos().Z() + alt_GPS_error_;
-#else
-      gazebo::math::Pose W_pose_W_C = link_->GetWorldCoGPose();
-      double pn =  W_pose_W_C.pos.x + north_GPS_error_;
-      double pe = -W_pose_W_C.pos.y + east_GPS_error_;
-      double h  =  W_pose_W_C.pos.z + alt_GPS_error_;
-#endif
+      ignition::math::Pose3d W_pose_W_C = GET_WORLD_COG_POSE(link_);
+      double pn =  GET_X(GET_POS(W_pose_W_C)) + north_GPS_error_;
+      double pe = -GET_Y(GET_POS(W_pose_W_C)) + east_GPS_error_;
+      double h  =  GET_Z(GET_POS(W_pose_W_C)) + alt_GPS_error_;
 
       // Convert meters to GPS angle
       double dlat, dlon;
@@ -178,26 +163,16 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       GPS_message_.altitude = initial_altitude_ + h;
 
       // Get Ground Speed
-#if GAZEBO_MAJOR_VERSION >=8
-      ignition::math::Vector3d C_linear_velocity_W_C = link_->RelativeLinearVel();
-      double u = C_linear_velocity_W_C.X();
-      double v = -C_linear_velocity_W_C.Y();
-#else
-      gazebo::math::Vector3 C_linear_velocity_W_C = link_->GetRelativeLinearVel();
-      double u = C_linear_velocity_W_C.x;
-      double v = -C_linear_velocity_W_C.y;
-#endif
+      GazeboVector C_linear_velocity_W_C = GET_RELATIVE_LINEAR_VEL(link_);
+      double u = GET_X(C_linear_velocity_W_C);
+      double v = -GET_Y(C_linear_velocity_W_C);
       double Vg = sqrt(u*u + v*v);
       double sigma_vg = sqrt((u*u*north_stdev_*north_stdev_ + v*v*east_stdev_*east_stdev_)/(u*u + v*v));
       double ground_speed_error = sigma_vg*standard_normal_distribution_(random_generator_);
       GPS_message_.speed = Vg + ground_speed_error;
 
       // Get Course Angle
-#if GAZEBO_MAJOR_VERSION >=8
-      double psi = -W_pose_W_C.Rot().Euler().Z();
-#else
-      double psi = -W_pose_W_C.rot.GetAsEuler().z;
-#endif
+      double psi = -GET_Z( GET_EULER( GET_ROT( W_pose_W_C)));
       double dx = Vg*cos(psi);
       double dy = Vg*sin(psi);
       double chi = atan2(dy,dx);
@@ -206,11 +181,7 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       GPS_message_.ground_course = chi + chi_error;
 
       // Publish
-#if GAZEBO_MAJOR_VERSION >=8
-      GPS_message_.header.stamp.fromSec(world_->SimTime().Double());
-#else
-      GPS_message_.header.stamp.fromSec(world_->GetSimTime().Double());
-#endif
+      GPS_message_.header.stamp.fromSec(GET_SIM_TIME(world_).Double());
       GPS_pub_.publish(GPS_message_);
 
       last_time_ = current_time;

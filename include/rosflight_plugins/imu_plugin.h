@@ -32,11 +32,7 @@
 #include <sensor_msgs/Imu.h>
 #include <geometry_msgs/Vector3Stamped.h>
 
-#if GAZEBO_MAJOR_VERSION >= 8
-#define GazeboVector ignition::math::Vector3d
-#else
-#define GazeboVector gazebo::math::Vector3
-#endif
+#include "gazebo_compat.h"
 
 namespace rosflight_plugins
 {
