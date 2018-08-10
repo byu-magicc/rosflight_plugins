@@ -34,15 +34,9 @@ AirspeedPlugin::~AirspeedPlugin() {
 
 // void AirspeedPlugin::WindSpeedCallback(const geometry_msgs::Vector3 &wind)
 // {
-//#if GAZEBO_MAJOR_VERSION >= 8
-//   wind_.N = wind.X();
-//   wind_.E = wind.Y();
-//   wind_.D = wind.Z();
-//#else
-//   wind_.N = wind.x;
-//   wind_.E = wind.y;
-//   wind_.D = wind.z;
-//#endif
+//   wind_.N = GET_X(wind);
+//   wind_.E = GET_Y(wind);
+//   wind_.D = GET_Z(wind);
 // }
 
 
@@ -62,11 +56,7 @@ void AirspeedPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf
   model_ = _model;
   world_ = model_->GetWorld();
 
-#if GAZEBO_MAJOR_VERSION >= 8
-  last_time_ = world_->SimTime();
-#else
-  last_time_ = world_->GetSimTime();
-#endif
+  last_time_ = GET_SIM_TIME(world_);
 
   namespace_.clear();
 
@@ -119,17 +109,10 @@ void AirspeedPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf
 void AirspeedPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info) {
 
   // Calculate Airspeed
-#if GAZEBO_MAJOR_VERSION >= 8
-  ignition::math::Vector3d C_linear_velocity_W_C = link_->RelativeLinearVel();
-  double u = C_linear_velocity_W_C.X();
-  double v = -C_linear_velocity_W_C.Y();
-  double w = -C_linear_velocity_W_C.Z();
-#else
-  gazebo::math::Vector3 C_linear_velocity_W_C = link_->GetRelativeLinearVel();
-  double u = C_linear_velocity_W_C.x;
-  double v = -C_linear_velocity_W_C.y;
-  double w = -C_linear_velocity_W_C.z;
-#endif
+  GazeboVector C_linear_velocity_W_C = GET_RELATIVE_LINEAR_VEL(link_);
+  double u = GET_X(C_linear_velocity_W_C);
+  double v = -GET_Y(C_linear_velocity_W_C);
+  double w = -GET_Z(C_linear_velocity_W_C);
 
   // TODO: Wind is being applied in the inertial frame, not the body-fixed frame
   // double ur = u - wind_.N;
