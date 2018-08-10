@@ -4,6 +4,7 @@
 #if GAZEBO_MAJOR_VERSION >= 8
 
 #define GazeboVector ignition::math::Vector3d
+#define GazeboPose ignition::math::Pose3d
 #define GET_X(VECTOR) VECTOR.X()
 #define GET_Y(VECTOR) VECTOR.Y()
 #define GET_Z(VECTOR) VECTOR.Z()
@@ -18,10 +19,12 @@
 #define GET_SIM_TIME(WORLD_PTR) WORLD_PTR->SimTime()
 #define GET_RELATIVE_LINEAR_VEL(LINK_PTR) LINK_PTR->RelativeLinearVel()
 #define GET_WORLD_COG_POSE(LINK_PTR) LINK_PTR->WorldCoGPose()
+#define GET_WORLD_POSE(LINK_PTR) LINK_PTR->WorldPose()
 
 #else //I.E. GAZEBO_MAJOR_VERSION < 8
 
 #define GazeboVector gazebo::math::Vector3
+#define GazeboPose gazebo::math::Pose
 #define GET_X(VECTOR) VECTOR.x
 #define GET_Y(VECTOR) VECTOR.y
 #define GET_Z(VECTOR) VECTOR.z
@@ -36,6 +39,7 @@
 #define GET_SIM_TIME(WORLD_PTR) WORLD_PTR->GetSimTime()
 #define GET_RELATIVE_LINEAR_VEL(LINK_PTR) LINK_PTR->GetRelativeLinearVel()
 #define GET_WORLD_COG_POSE(LINK_PTR) LINK_PTR->GetWorldCoGPose()
+#define GET_WORLD_POSE(LINK_PTR) LINK_PTR->GetWorldPose()
 
 #endif //GAZEBO_MAJOR_VERSION >= 8
 
