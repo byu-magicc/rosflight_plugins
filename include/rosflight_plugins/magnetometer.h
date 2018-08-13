@@ -31,6 +31,7 @@
 
 #include <sensor_msgs/MagneticField.h>
 
+#include "gazebo_compat.h"
 
 namespace rosflight_plugins
 {
@@ -62,8 +63,8 @@ namespace rosflight_plugins
     double inclination_;
     double declination_;
 
-    gazebo::math::Vector3 inertial_magnetic_field_;
-    gazebo::math::Vector3 bias_vector_;
+    GazeboVector inertial_magnetic_field_;
+    GazeboVector bias_vector_;
 
     sensor_msgs::MagneticField mag_msg_;
 

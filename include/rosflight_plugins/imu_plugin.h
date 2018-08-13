@@ -32,6 +32,8 @@
 #include <sensor_msgs/Imu.h>
 #include <geometry_msgs/Vector3Stamped.h>
 
+#include "gazebo_compat.h"
+
 namespace rosflight_plugins
 {
 
@@ -86,10 +88,10 @@ namespace rosflight_plugins
 
     sensor_msgs::Imu imu_message_;
 
-    gazebo::math::Vector3 gravity_;
+    GazeboVector gravity_;
 
-    gazebo::math::Vector3 gyro_bias_;
-    gazebo::math::Vector3 acc_bias_;
+    GazeboVector gyro_bias_;
+    GazeboVector acc_bias_;
   };
 }
 
