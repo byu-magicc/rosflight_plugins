@@ -105,7 +105,7 @@ void MagnetometerPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr 
   // Gazebo coordinates is NWU and Earth's magnetic field is defined in NED, hence the negative signs
   SET_Z(inertial_magnetic_field_,sin(-inclination_));
   SET_X(inertial_magnetic_field_,cos(-inclination_)*cos(-declination_));
-  SET_R(inertial_magnetic_field_,cos(-inclination_)*sin(-declination_));
+  SET_Y(inertial_magnetic_field_,cos(-inclination_)*sin(-declination_));
 
   // turn off noise and bias of noise_on is disabled
   if (!noise_on_)
