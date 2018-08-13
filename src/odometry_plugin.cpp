@@ -16,6 +16,7 @@
 
 
 #include "rosflight_plugins/odometry_plugin.h"
+#include "rosflight_plugins/gazebo_compat.h"
 
 namespace rosflight_plugins
 {
@@ -102,14 +103,14 @@ void OdometryPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf
 void OdometryPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info) {
   // C denotes child frame, P parent frame, and W world frame.
   // Further C_pose_W_P denotes pose of P wrt. W expressed in C.
-  GazeboPose inertial_pose = GET_COG_POSE(link_);
+  GazeboPose inertial_pose = GET_WORLD_COG_POSE(link_);
   GazeboVector body_fixed_linear_velocity = GET_RELATIVE_LINEAR_VEL(link_);
   GazeboVector body_fixed_angular_velocity = GET_RELATIVE_ANGULAR_VEL(link_);
 
   nav_msgs::Odometry odometry_NED, odometry_NWU;
   geometry_msgs::TransformStamped transform_NED, transform_NWU;
-  odometry_NWU.header.stamp.sec = (GET_SIM_TIME(world_).sec;
-  odometry_NWU.header.stamp.nsec = (GET_SIM_TIME(world_).nsec;
+  odometry_NWU.header.stamp.sec = (GET_SIM_TIME(world_)).sec;
+  odometry_NWU.header.stamp.nsec = (GET_SIM_TIME(world_)).nsec;
   odometry_NWU.header.frame_id = "world_NWU";
   odometry_NWU.child_frame_id = namespace_;
 

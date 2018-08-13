@@ -15,6 +15,7 @@
  */
 
 #include "rosflight_plugins/GPS_plugin.h"
+#include "rosflight_plugins/gazebo_compat.h"
 
 namespace rosflight_plugins
 {
