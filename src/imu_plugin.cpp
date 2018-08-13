@@ -48,11 +48,7 @@ void ImuPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   model_ = _model;
   world_ = model_->GetWorld();
 
-#if GAZEBO_MAJOR_VERSION >= 8
-  last_time_ = world_->SimTime();
-#else
-  last_time_ = world_->GetSimTime();
-#endif
+  last_time_ = GET_SIM_TIME(world_);
 
   namespace_.clear();
 
@@ -123,57 +119,30 @@ void ImuPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   normal_distribution_ = std::normal_distribution<double>(0.0, 1.0);
   uniform_distribution_ = std::uniform_real_distribution<double>(-1.0, 1.0);
 
-#if GAZEBO_MAJOR_VERSION >= 8
   // Turn off noise and bias if noise_on_ disabled
   if (!noise_on_)
   {
     gyro_stdev_ = 0;
     gyro_bias_range_ = 0;
     gyro_bias_walk_stdev_ = 0;
-    gyro_bias_.X(0);
-    gyro_bias_.Y(0);
-    gyro_bias_.Z(0);
+    SET_X(gyro_bias_,0);
+    SET_Y(gyro_bias_,0);
+    SET_Z(gyro_bias_,0);
     acc_stdev_ = 0;
     acc_bias_range_ = 0;
     acc_bias_walk_stdev_ = 0;
-    acc_bias_.X(0);
-    acc_bias_.Y(0);
-    acc_bias_.Z(0);
+    SET_X(acc_bias_,0);
+    SET_Y(acc_bias_,0);
+    SET_Z(acc_bias_,0);
   }
 
   // Initialize the Bias
-  gyro_bias_.X(gyro_bias_range_*uniform_distribution_(random_generator_));
-  gyro_bias_.Y(gyro_bias_range_*uniform_distribution_(random_generator_));
-  gyro_bias_.Z(gyro_bias_range_*uniform_distribution_(random_generator_));
-  acc_bias_.X(acc_bias_range_*uniform_distribution_(random_generator_));
-  acc_bias_.Y(acc_bias_range_*uniform_distribution_(random_generator_));
-  acc_bias_.Z(acc_bias_range_*uniform_distribution_(random_generator_));
-#else
-  // Turn off noise and bias if noise_on_ disabled
-  if (!noise_on_)
-  {
-    gyro_stdev_ = 0;
-    gyro_bias_range_ = 0;
-    gyro_bias_walk_stdev_ = 0;
-    gyro_bias_.x = 0;
-    gyro_bias_.y = 0;
-    gyro_bias_.z = 0;
-    acc_stdev_ = 0;
-    acc_bias_range_ = 0;
-    acc_bias_walk_stdev_ = 0;
-    acc_bias_.x = 0;
-    acc_bias_.y = 0;
-    acc_bias_.z = 0;
-  }
-
-  // Initialize the Bias
-  gyro_bias_.x = gyro_bias_range_*uniform_distribution_(random_generator_);
-  gyro_bias_.y = gyro_bias_range_*uniform_distribution_(random_generator_);
-  gyro_bias_.z = gyro_bias_range_*uniform_distribution_(random_generator_);
-  acc_bias_.x = acc_bias_range_*uniform_distribution_(random_generator_);
-  acc_bias_.y = acc_bias_range_*uniform_distribution_(random_generator_);
-  acc_bias_.z = acc_bias_range_*uniform_distribution_(random_generator_);
-#endif
+  SET_X(gyro_bias_,gyro_bias_range_*uniform_distribution_(random_generator_));
+  SET_Y(gyro_bias_,gyro_bias_range_*uniform_distribution_(random_generator_));
+  SET_Z(gyro_bias_,gyro_bias_range_*uniform_distribution_(random_generator_));
+  SET_X(acc_bias_,acc_bias_range_*uniform_distribution_(random_generator_));
+  SET_Y(acc_bias_,acc_bias_range_*uniform_distribution_(random_generator_));
+  SET_Z(acc_bias_,acc_bias_range_*uniform_distribution_(random_generator_));
  
   // Set up static members of IMU message
   imu_message_.header.frame_id = link_name_;
