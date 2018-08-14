@@ -23,11 +23,7 @@ ImuPlugin::ImuPlugin() : gazebo::ModelPlugin() { }
 
 ImuPlugin::~ImuPlugin()
 {
-#if GAZEBO_MAJOR_VERSION >= 8
-  updateConnection_.reset();
-#else
-  gazebo::event::Events::DisconnectWorldUpdateBegin(updateConnection_);
-#endif
+  DISCONNECT_WORLD_UPDATE_BEGIN(updateConnection_);
   nh_.shutdown();
 }
 
@@ -53,11 +49,7 @@ void ImuPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   namespace_.clear();
 
 
-#if GAZEBO_MAJOR_VERSION >=8
-  gravity_ = world_->Gravity();
-#else
-  gravity_ = world_->GetPhysicsEngine()->GetGravity();
-#endif
+  gravity_ = GET_GRAVITY(world_);
 
   //
   // Get elements from the robot urdf/sdf file
@@ -78,11 +70,7 @@ void ImuPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
     gzthrow("[imu_plugin] Couldn't find specified link \"" << link_name_ << "\".");
 
   // Get mass
-#if GAZEBO_MAJOR_VERSION >=8
-  mass_ = link_->GetInertial()->Mass();
-#else
-  mass_ = link_->GetInertial()->GetMass();
-#endif
+  mass_ = GET_MASS(link_->GetInertial());
 
   //
   // ROS Node Setup

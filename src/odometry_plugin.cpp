@@ -22,11 +22,7 @@ namespace rosflight_plugins
 {
 
 OdometryPlugin::~OdometryPlugin() {
-#if GAZEBO_MAJOR_VERSION >=8
-  updateConnection_.reset();
-#else
-  gazebo::event::Events::DisconnectWorldUpdateBegin(updateConnection_);
-#endif
+  DISCONNECT_WORLD_UPDATE_BEGIN(updateConnection_);
   nh_.shutdown();
 }
 
@@ -80,11 +76,7 @@ void OdometryPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf
   odometry_pub_topic_ = nh_private_.param<std::string>("odometry_topic", "odometry");
   parent_frame_id_ = nh_private_.param<std::string>("frame_id", "world");
 
-#if GAZEBO_MAJOR_VERSION >=8
-  parent_link_ = world_->EntityByName(parent_frame_id_);
-#else
-  parent_link_ = world_->GetEntity(parent_frame_id_);
-#endif
+  parent_link_ = GET_ENTITY(world_ , parent_frame_id_);
   if (parent_link_ == nullptr && parent_frame_id_ != "world")
     gzthrow("[gazebo_odometry_plugin] Couldn't find specified parent link \"" << parent_frame_id_ << "\".");
  

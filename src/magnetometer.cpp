@@ -23,11 +23,7 @@ MagnetometerPlugin::MagnetometerPlugin() : ModelPlugin() {}
 
 
 MagnetometerPlugin::~MagnetometerPlugin() {
-#if GAZEBO_MAJOR_VERSION >= 8
-  updateConnection_.reset();
-#else
-  gazebo::event::Events::DisconnectWorldUpdateBegin(updateConnection_);
-#endif
+  DISCONNECT_WORLD_UPDATE_BEGIN(updateConnection_);
   nh_.shutdown();
 }
 
