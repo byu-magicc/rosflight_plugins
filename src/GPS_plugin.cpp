@@ -26,7 +26,7 @@ GPSPlugin::GPSPlugin() : ModelPlugin() {}
 
 GPSPlugin::~GPSPlugin()
 {
-  DISCONNECT_WORLD_UPDATE_BEGIN(updateConnection_);
+  GZ_COMPAT_DISCONNECT_WORLD_UPDATE_BEGIN(updateConnection_);
   nh_.shutdown();
 }
 
@@ -47,7 +47,7 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   model_ = _model;
   world_ = model_->GetWorld();
 
-  last_time_ = GET_SIM_TIME(world_);
+  last_time_ = GZ_COMPAT_GET_SIM_TIME(world_);
 
   namespace_.clear();
 
@@ -131,7 +131,7 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
 void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 {
   // check if time to publish
-  gazebo::common::Time current_time = GET_SIM_TIME(world_);
+  gazebo::common::Time current_time = GZ_COMPAT_GET_SIM_TIME(world_);
   if ((current_time - last_time_).Double() >= sample_time_) {
 
       // Add noise per Gauss-Markov Process (p. 139 UAV Book)
@@ -145,10 +145,10 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       alt_GPS_error_ = exp(-1.0*alt_k_GPS_*sample_time_)*alt_GPS_error_ + noise;
 
       // Find NED position in meters
-      GazeboPose W_pose_W_C = GET_WORLD_COG_POSE(link_);
-      double pn =  GET_X(GET_POS(W_pose_W_C)) + north_GPS_error_;
-      double pe = -GET_Y(GET_POS(W_pose_W_C)) + east_GPS_error_;
-      double h  =  GET_Z(GET_POS(W_pose_W_C)) + alt_GPS_error_;
+      GazeboPose W_pose_W_C = GZ_COMPAT_GZ_COMPAT_GET_WORLD_COG_POSE(link_);
+      double pn =  GZ_COMPAT_GET_X(GZ_COMPAT_GET_POS(W_pose_W_C)) + north_GPS_error_;
+      double pe = -GZ_COMPAT_GET_Y(GZ_COMPAT_GET_POS(W_pose_W_C)) + east_GPS_error_;
+      double h  =  GZ_COMPAT_GET_Z(GZ_COMPAT_GET_POS(W_pose_W_C)) + alt_GPS_error_;
 
       // Convert meters to GPS angle
       double dlat, dlon;
@@ -160,16 +160,16 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       GPS_message_.altitude = initial_altitude_ + h;
 
       // Get Ground Speed
-      GazeboVector C_linear_velocity_W_C = GET_RELATIVE_LINEAR_VEL(link_);
-      double u = GET_X(C_linear_velocity_W_C);
-      double v = -GET_Y(C_linear_velocity_W_C);
+      GazeboVector C_linear_velocity_W_C = GZ_COMPAT_GET_RELATIVE_LINEAR_VEL(link_);
+      double u = GZ_COMPAT_GET_X(C_linear_velocity_W_C);
+      double v = -GZ_COMPAT_GET_Y(C_linear_velocity_W_C);
       double Vg = sqrt(u*u + v*v);
       double sigma_vg = sqrt((u*u*north_stdev_*north_stdev_ + v*v*east_stdev_*east_stdev_)/(u*u + v*v));
       double ground_speed_error = sigma_vg*standard_normal_distribution_(random_generator_);
       GPS_message_.speed = Vg + ground_speed_error;
 
       // Get Course Angle
-      double psi = -GET_Z( GET_EULER( GET_ROT( W_pose_W_C)));
+      double psi = -GZ_COMPAT_GET_Z( GZ_COMPAT_GET_EULER( GZ_COMPAT_GET_ROT( W_pose_W_C)));
       double dx = Vg*cos(psi);
       double dy = Vg*sin(psi);
       double chi = atan2(dy,dx);
@@ -178,7 +178,7 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       GPS_message_.ground_course = chi + chi_error;
 
       // Publish
-      GPS_message_.header.stamp.fromSec(GET_SIM_TIME(world_).Double());
+      GPS_message_.header.stamp.fromSec(GZ_COMPAT_GET_SIM_TIME(world_).Double());
       GPS_pub_.publish(GPS_message_);
 
       last_time_ = current_time;

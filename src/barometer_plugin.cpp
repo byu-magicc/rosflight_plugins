@@ -24,7 +24,7 @@ BarometerPlugin::BarometerPlugin() : gazebo::ModelPlugin() { }
 
 BarometerPlugin::~BarometerPlugin()
 {
-  DISCONNECT_WORLD_UPDATE_BEGIN(updateConnection_);
+  GZ_COMPAT_DISCONNECT_WORLD_UPDATE_BEGIN(updateConnection_);
   nh_.shutdown();
 }
 
@@ -45,7 +45,7 @@ void BarometerPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sd
   model_ = _model;
   world_ = model_->GetWorld();
 
-  last_time_ = GET_SIM_TIME(world_);
+  last_time_ = GZ_COMPAT_GET_SIM_TIME(world_);
 
   namespace_.clear();
   
@@ -100,15 +100,15 @@ void BarometerPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sd
 void BarometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 {
   // check if time to publish
-  gazebo::common::Time current_time = GET_SIM_TIME(world_);
+  gazebo::common::Time current_time = GZ_COMPAT_GET_SIM_TIME(world_);
   if ((current_time - last_time_).Double() >= sample_time_) {
 
     // pull z measurement out of Gazebo (ENU)
-    GazeboPose pose = GET_WORLD_POSE(link_);
+    GazeboPose pose = GZ_COMPAT_GZ_COMPAT_GET_WORLD_POSE(link_);
 
     // Create a new barometer message
     rosflight_msgs::Barometer msg;
-    msg.altitude = GET_Z(GET_POS(pose));
+    msg.altitude = GZ_COMPAT_GET_Z(GZ_COMPAT_GET_POS(pose));
 
     // if requested add noise to altitude measurement
     if (noise_on_)
@@ -119,7 +119,7 @@ void BarometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
     msg.pressure = 101325.0*pow(1- (2.25577e-5 * msg.altitude), 5.25588);
 
     // publish message
-    msg.header.stamp.fromSec(GET_SIM_TIME(world_).Double());
+    msg.header.stamp.fromSec(GZ_COMPAT_GET_SIM_TIME(world_).Double());
     msg.header.frame_id = link_name_;
     alt_pub_.publish(msg);
 

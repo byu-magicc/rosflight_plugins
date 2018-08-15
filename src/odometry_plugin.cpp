@@ -22,7 +22,7 @@ namespace rosflight_plugins
 {
 
 OdometryPlugin::~OdometryPlugin() {
-  DISCONNECT_WORLD_UPDATE_BEGIN(updateConnection_);
+  GZ_COMPAT_DISCONNECT_WORLD_UPDATE_BEGIN(updateConnection_);
   nh_.shutdown();
 }
 
@@ -76,7 +76,7 @@ void OdometryPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf
   odometry_pub_topic_ = nh_private_.param<std::string>("odometry_topic", "odometry");
   parent_frame_id_ = nh_private_.param<std::string>("frame_id", "world");
 
-  parent_link_ = GET_ENTITY(world_ , parent_frame_id_);
+  parent_link_ = GZ_COMPAT_GET_ENTITY(world_ , parent_frame_id_);
   if (parent_link_ == nullptr && parent_frame_id_ != "world")
     gzthrow("[gazebo_odometry_plugin] Couldn't find specified parent link \"" << parent_frame_id_ << "\".");
  
@@ -95,73 +95,73 @@ void OdometryPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf
 void OdometryPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info) {
   // C denotes child frame, P parent frame, and W world frame.
   // Further C_pose_W_P denotes pose of P wrt. W expressed in C.
-  GazeboPose inertial_pose = GET_WORLD_COG_POSE(link_);
-  GazeboVector body_fixed_linear_velocity = GET_RELATIVE_LINEAR_VEL(link_);
-  GazeboVector body_fixed_angular_velocity = GET_RELATIVE_ANGULAR_VEL(link_);
+  GazeboPose inertial_pose = GZ_COMPAT_GZ_COMPAT_GET_WORLD_COG_POSE(link_);
+  GazeboVector body_fixed_linear_velocity = GZ_COMPAT_GET_RELATIVE_LINEAR_VEL(link_);
+  GazeboVector body_fixed_angular_velocity = GZ_COMPAT_GET_RELATIVE_ANGULAR_VEL(link_);
 
   nav_msgs::Odometry odometry_NED, odometry_NWU;
   geometry_msgs::TransformStamped transform_NED, transform_NWU;
-  odometry_NWU.header.stamp.sec = (GET_SIM_TIME(world_)).sec;
-  odometry_NWU.header.stamp.nsec = (GET_SIM_TIME(world_)).nsec;
+  odometry_NWU.header.stamp.sec = (GZ_COMPAT_GET_SIM_TIME(world_)).sec;
+  odometry_NWU.header.stamp.nsec = (GZ_COMPAT_GET_SIM_TIME(world_)).nsec;
   odometry_NWU.header.frame_id = "world_NWU";
   odometry_NWU.child_frame_id = namespace_;
 
   // Set the NWU odometry and transform messages
-  odometry_NWU.pose.pose.position.x = GET_X(GET_POS(inertial_pose));
-  odometry_NWU.pose.pose.position.y = GET_Y(GET_POS(inertial_pose));
-  odometry_NWU.pose.pose.position.z = GET_Z(GET_POS(inertial_pose));
-  odometry_NWU.pose.pose.orientation.w = GET_W(GET_ROT(inertial_pose));
-  odometry_NWU.pose.pose.orientation.x = GET_X(GET_ROT(inertial_pose));
-  odometry_NWU.pose.pose.orientation.y = GET_Y(GET_ROT(inertial_pose));
-  odometry_NWU.pose.pose.orientation.z = GET_Z(GET_ROT(inertial_pose));
-  odometry_NWU.twist.twist.linear.x = GET_X(body_fixed_linear_velocity);
-  odometry_NWU.twist.twist.linear.y = GET_Y(body_fixed_linear_velocity);
-  odometry_NWU.twist.twist.linear.z = GET_Z(body_fixed_linear_velocity);
-  odometry_NWU.twist.twist.angular.x = GET_X(body_fixed_angular_velocity);
-  odometry_NWU.twist.twist.angular.y = GET_Y(body_fixed_angular_velocity);
-  odometry_NWU.twist.twist.angular.z = GET_Z(body_fixed_angular_velocity);
+  odometry_NWU.pose.pose.position.x = GZ_COMPAT_GET_X(GZ_COMPAT_GET_POS(inertial_pose));
+  odometry_NWU.pose.pose.position.y = GZ_COMPAT_GET_Y(GZ_COMPAT_GET_POS(inertial_pose));
+  odometry_NWU.pose.pose.position.z = GZ_COMPAT_GET_Z(GZ_COMPAT_GET_POS(inertial_pose));
+  odometry_NWU.pose.pose.orientation.w = GZ_COMPAT_GET_W(GZ_COMPAT_GET_ROT(inertial_pose));
+  odometry_NWU.pose.pose.orientation.x = GZ_COMPAT_GET_X(GZ_COMPAT_GET_ROT(inertial_pose));
+  odometry_NWU.pose.pose.orientation.y = GZ_COMPAT_GET_Y(GZ_COMPAT_GET_ROT(inertial_pose));
+  odometry_NWU.pose.pose.orientation.z = GZ_COMPAT_GET_Z(GZ_COMPAT_GET_ROT(inertial_pose));
+  odometry_NWU.twist.twist.linear.x = GZ_COMPAT_GET_X(body_fixed_linear_velocity);
+  odometry_NWU.twist.twist.linear.y = GZ_COMPAT_GET_Y(body_fixed_linear_velocity);
+  odometry_NWU.twist.twist.linear.z = GZ_COMPAT_GET_Z(body_fixed_linear_velocity);
+  odometry_NWU.twist.twist.angular.x = GZ_COMPAT_GET_X(body_fixed_angular_velocity);
+  odometry_NWU.twist.twist.angular.y = GZ_COMPAT_GET_Y(body_fixed_angular_velocity);
+  odometry_NWU.twist.twist.angular.z = GZ_COMPAT_GET_Z(body_fixed_angular_velocity);
   odometry_NWU_pub_.publish(odometry_NWU);
 
   transform_NWU.header = odometry_NWU.header;
-  transform_NWU.transform.translation.x = GET_X(GET_POS(inertial_pose));
-  transform_NWU.transform.translation.y = GET_Y(GET_POS(inertial_pose));
-  transform_NWU.transform.translation.z = GET_Z(GET_POS(inertial_pose));
-  transform_NWU.transform.rotation.w = GET_W(GET_ROT(inertial_pose));
-  transform_NWU.transform.rotation.x = GET_X(GET_ROT(inertial_pose));
-  transform_NWU.transform.rotation.y = GET_Y(GET_ROT(inertial_pose));
-  transform_NWU.transform.rotation.z = GET_Z(GET_ROT(inertial_pose));
+  transform_NWU.transform.translation.x = GZ_COMPAT_GET_X(GZ_COMPAT_GET_POS(inertial_pose));
+  transform_NWU.transform.translation.y = GZ_COMPAT_GET_Y(GZ_COMPAT_GET_POS(inertial_pose));
+  transform_NWU.transform.translation.z = GZ_COMPAT_GET_Z(GZ_COMPAT_GET_POS(inertial_pose));
+  transform_NWU.transform.rotation.w = GZ_COMPAT_GET_W(GZ_COMPAT_GET_ROT(inertial_pose));
+  transform_NWU.transform.rotation.x = GZ_COMPAT_GET_X(GZ_COMPAT_GET_ROT(inertial_pose));
+  transform_NWU.transform.rotation.y = GZ_COMPAT_GET_Y(GZ_COMPAT_GET_ROT(inertial_pose));
+  transform_NWU.transform.rotation.z = GZ_COMPAT_GET_Z(GZ_COMPAT_GET_ROT(inertial_pose));
   transform_NWU_pub_.publish(transform_NWU);
 
   // Convert from NWU to NED
-  odometry_NED.header.stamp.sec = (GET_SIM_TIME(world_)).sec;
-  odometry_NED.header.stamp.nsec = (GET_SIM_TIME(world_)).nsec;
+  odometry_NED.header.stamp.sec = (GZ_COMPAT_GET_SIM_TIME(world_)).sec;
+  odometry_NED.header.stamp.nsec = (GZ_COMPAT_GET_SIM_TIME(world_)).nsec;
 
   odometry_NED.header.frame_id = "world_NED";
   odometry_NED.child_frame_id = namespace_;
 
-  odometry_NED.pose.pose.position.x = GET_X(GET_POS(inertial_pose));
-  odometry_NED.pose.pose.position.y = -GET_Y(GET_POS(inertial_pose));
-  odometry_NED.pose.pose.position.z = -GET_Z(GET_POS(inertial_pose));
-  odometry_NED.pose.pose.orientation.w = GET_W(GET_ROT(inertial_pose));
-  odometry_NED.pose.pose.orientation.x = GET_X(GET_ROT(inertial_pose));
-  odometry_NED.pose.pose.orientation.y = -GET_Y(GET_ROT(inertial_pose));
-  odometry_NED.pose.pose.orientation.z = -GET_Z(GET_ROT(inertial_pose));
-  odometry_NED.twist.twist.linear.x = GET_X(body_fixed_linear_velocity);
-  odometry_NED.twist.twist.linear.y = -GET_Y(body_fixed_linear_velocity);
-  odometry_NED.twist.twist.linear.z = -GET_Z(body_fixed_linear_velocity);
-  odometry_NED.twist.twist.angular.x = GET_X(body_fixed_angular_velocity);
-  odometry_NED.twist.twist.angular.y = -GET_Y(body_fixed_angular_velocity);
-  odometry_NED.twist.twist.angular.z = -GET_Z(body_fixed_angular_velocity);
+  odometry_NED.pose.pose.position.x = GZ_COMPAT_GET_X(GZ_COMPAT_GET_POS(inertial_pose));
+  odometry_NED.pose.pose.position.y = -GZ_COMPAT_GET_Y(GZ_COMPAT_GET_POS(inertial_pose));
+  odometry_NED.pose.pose.position.z = -GZ_COMPAT_GET_Z(GZ_COMPAT_GET_POS(inertial_pose));
+  odometry_NED.pose.pose.orientation.w = GZ_COMPAT_GET_W(GZ_COMPAT_GET_ROT(inertial_pose));
+  odometry_NED.pose.pose.orientation.x = GZ_COMPAT_GET_X(GZ_COMPAT_GET_ROT(inertial_pose));
+  odometry_NED.pose.pose.orientation.y = -GZ_COMPAT_GET_Y(GZ_COMPAT_GET_ROT(inertial_pose));
+  odometry_NED.pose.pose.orientation.z = -GZ_COMPAT_GET_Z(GZ_COMPAT_GET_ROT(inertial_pose));
+  odometry_NED.twist.twist.linear.x = GZ_COMPAT_GET_X(body_fixed_linear_velocity);
+  odometry_NED.twist.twist.linear.y = -GZ_COMPAT_GET_Y(body_fixed_linear_velocity);
+  odometry_NED.twist.twist.linear.z = -GZ_COMPAT_GET_Z(body_fixed_linear_velocity);
+  odometry_NED.twist.twist.angular.x = GZ_COMPAT_GET_X(body_fixed_angular_velocity);
+  odometry_NED.twist.twist.angular.y = -GZ_COMPAT_GET_Y(body_fixed_angular_velocity);
+  odometry_NED.twist.twist.angular.z = -GZ_COMPAT_GET_Z(body_fixed_angular_velocity);
   odometry_NED_pub_.publish(odometry_NED);
 
   transform_NED.header = odometry_NED.header;
-  transform_NED.transform.translation.x = GET_X(GET_POS(inertial_pose));
-  transform_NED.transform.translation.y = -GET_Y(GET_POS(inertial_pose));
-  transform_NED.transform.translation.z = -GET_Z(GET_POS(inertial_pose));
-  transform_NED.transform.rotation.w = GET_W(GET_ROT(inertial_pose));
-  transform_NED.transform.rotation.x = GET_X(GET_ROT(inertial_pose));
-  transform_NED.transform.rotation.y = -GET_Y(GET_ROT(inertial_pose));
-  transform_NED.transform.rotation.z = -GET_Z(GET_ROT(inertial_pose));
+  transform_NED.transform.translation.x = GZ_COMPAT_GET_X(GZ_COMPAT_GET_POS(inertial_pose));
+  transform_NED.transform.translation.y = -GZ_COMPAT_GET_Y(GZ_COMPAT_GET_POS(inertial_pose));
+  transform_NED.transform.translation.z = -GZ_COMPAT_GET_Z(GZ_COMPAT_GET_POS(inertial_pose));
+  transform_NED.transform.rotation.w = GZ_COMPAT_GET_W(GZ_COMPAT_GET_ROT(inertial_pose));
+  transform_NED.transform.rotation.x = GZ_COMPAT_GET_X(GZ_COMPAT_GET_ROT(inertial_pose));
+  transform_NED.transform.rotation.y = -GZ_COMPAT_GET_Y(GZ_COMPAT_GET_ROT(inertial_pose));
+  transform_NED.transform.rotation.z = -GZ_COMPAT_GET_Z(GZ_COMPAT_GET_ROT(inertial_pose));
   transform_NED_pub_.publish(transform_NED);
 
   // Publish all the topics, for which the topic name is specified.
