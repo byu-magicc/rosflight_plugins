@@ -15,7 +15,7 @@
  */
 
 #include "rosflight_plugins/airspeed_plugin.h"
-#include "rosflight_plugins/gazebo_compat.h"
+#include "rosflight_plugins/gz_compat.h"
 
 
 namespace rosflight_plugins

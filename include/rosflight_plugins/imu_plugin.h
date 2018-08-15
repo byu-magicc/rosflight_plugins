@@ -32,7 +32,7 @@
 #include <sensor_msgs/Imu.h>
 #include <geometry_msgs/Vector3Stamped.h>
 
-#include "gazebo_compat.h"
+#include "gz_compat.h"
 
 namespace rosflight_plugins
 {

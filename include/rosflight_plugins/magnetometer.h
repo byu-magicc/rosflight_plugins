@@ -31,7 +31,7 @@
 
 #include <sensor_msgs/MagneticField.h>
 
-#include "gazebo_compat.h"
+#include "gz_compat.h"
 
 namespace rosflight_plugins
 {
