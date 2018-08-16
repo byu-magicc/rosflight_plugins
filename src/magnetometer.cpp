@@ -128,7 +128,7 @@ void MagnetometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
   gazebo::common::Time current_time = GZ_COMPAT_GET_SIM_TIME(world_);
   if ((current_time - last_time_).Double() >= sample_time_) {
 
-    GazeboPose I_to_B = GZ_COMPAT_GZ_COMPAT_GET_WORLD_POSE(link_);
+    GazeboPose I_to_B = GZ_COMPAT_GET_WORLD_POSE(link_);
 
     GazeboVector noise;
     GZ_COMPAT_SET_X(noise,noise_sigma_*normal_dist_(random_gen_));

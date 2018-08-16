@@ -157,7 +157,7 @@ void ImuPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
   gazebo::common::Time current_time = GZ_COMPAT_GET_SIM_TIME(world_);
   if ((current_time - last_time_).Double() >= sample_time_)
   {
-    GazeboQuaternion q_I_NWU = GZ_COMPAT_GET_ROT(GZ_COMPAT_GZ_COMPAT_GET_WORLD_POSE(link_));
+    GazeboQuaternion q_I_NWU = GZ_COMPAT_GET_ROT(GZ_COMPAT_GET_WORLD_POSE(link_));
     GazeboVector omega_B_NWU = GZ_COMPAT_GET_RELATIVE_ANGULAR_VEL(link_);
     GazeboVector uvw_B_NWU = GZ_COMPAT_GET_RELATIVE_LINEAR_VEL(link_);
 

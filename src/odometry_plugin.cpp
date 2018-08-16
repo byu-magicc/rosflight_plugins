@@ -95,7 +95,7 @@ void OdometryPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf
 void OdometryPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info) {
   // C denotes child frame, P parent frame, and W world frame.
   // Further C_pose_W_P denotes pose of P wrt. W expressed in C.
-  GazeboPose inertial_pose = GZ_COMPAT_GZ_COMPAT_GET_WORLD_COG_POSE(link_);
+  GazeboPose inertial_pose = GZ_COMPAT_GET_WORLD_COG_POSE(link_);
   GazeboVector body_fixed_linear_velocity = GZ_COMPAT_GET_RELATIVE_LINEAR_VEL(link_);
   GazeboVector body_fixed_angular_velocity = GZ_COMPAT_GET_RELATIVE_ANGULAR_VEL(link_);
 
