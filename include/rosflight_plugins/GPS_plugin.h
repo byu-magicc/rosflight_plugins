@@ -29,7 +29,9 @@
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
 
-#include <rosflight_msgs/GPS.h>
+#include <rosflight_msgs/GNSS.h>
+#include <sensor_msgs/NavSatFix.h>
+#include <geometry_msgs/TwistStamped.h>
 
 namespace rosflight_plugins 
 {
@@ -49,7 +51,9 @@ namespace rosflight_plugins
     std::string namespace_;
     ros::NodeHandle nh_;
     ros::NodeHandle nh_private_;
-    ros::Publisher GPS_pub_;
+    ros::Publisher GNSS_pub_;
+    ros::Publisher GNSS_fix_pub_;
+    ros::Publisher GNSS_vel_pub_;
 
     // Gazebo connections
     std::string link_name_;
@@ -64,10 +68,14 @@ namespace rosflight_plugins
     std::normal_distribution<double> standard_normal_distribution_;
 
     // Topic
-    std::string GPS_topic_;
+    std::string GNSS_topic_;
+    std::string GNSS_vel_topic_;
+    std::string GNSS_fix_topic_;
 
     // Message with static info prefilled
-    rosflight_msgs::GPS GPS_message_;
+    rosflight_msgs::GNSS GNSS_message_;
+    sensor_msgs::NavSatFix GNSS_fix_message_
+    geometry_msgs::TwistStamped GNSS_vel_message_;
 
     // params
     double pub_rate_;
@@ -93,7 +101,15 @@ namespace rosflight_plugins
 
     double sample_time_;
 
+    //Constants, from Wikipedia https://en.wikipedia.org/wiki/World_Geodetic_System
+    static constexpr double equatorial_radius = 6378137.;
+    static constexpr double polar_radius = 6356752.3142;
+
     void measure(double dpn, double dpe, double & dlat, double & dlon);
+    inline double square(double a) {return a * a;}
+    inline double deg_to_rad(double deg) {return deg * M_PI / 180.0}
+    double earth_radius(double latitude);
+    void lla_to_ecef(double latitude, double longitude, double altitude, double &x, double &y, double &z);
 
   };
 }
