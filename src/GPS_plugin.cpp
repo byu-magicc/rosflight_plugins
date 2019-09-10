@@ -122,8 +122,11 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   // Fill static members of GPS message.
   //TODO update this to newest GNSS message standard
   GNSS_message_.header.frame_id = link_name_;
-  GNSS_message_.fix = true;
-  GNSS_message_.NumSat = numSat;
+  //TODO add constants for UBX fix types
+  GNSS_message_.fix = 3; // corresponds to a 3D fix
+
+  GNSS_fix_message_.status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
+  GNSS_fix_message_.status.status = sensor_msgs::NavSatStatus::STATUS_FIX;
 
   // initialize GPS error to zero
   north_GPS_error_ = 0.0;
@@ -192,14 +195,15 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       GNSS_message_.position[0] = ecef_x;
       GNSS_message_.position[1] = ecef_y;
       GNSS_message_.position[2] = ecef_z;
-      //TODO finish GNSS message fields
+      //TODO GNSS message velocity and accuracies
+      GNSS_message_.speed_accuracy = sigma_vg;
+      GNSS_message_.vertical_accuracy = alt_GPS_error_;
+      GNSS_message_.horizontal_accuracy = north_GPS_error_ > east_GPS_error_ ? north_GPS_error_ : east_GPS_error_;
 
       //Fill the NavSatFix message
       GNSS_fix_message_.latitude = latitude_deg;
       GNSS_fix_message_.longitude = longitude_deg;
       GNSS_fix_message_.altitude = altitude;
-      GNSS_fix_message_.status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
-      GNSS_fix_message_.status.status = sensor_msgs::NavSatStatus::STATUS_FIX;
       //TODO NavSatFix covariance
 
       //Fill the TwistStamped
@@ -208,6 +212,7 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       // Publish
       //TODO publish all messages
       GNSS_message_.header.stamp.fromSec(GZ_COMPAT_GET_SIM_TIME(world_).Double());
+      GNSS_vel_message_.header.stamp = GNSS_message_.header.stamp;
       GNSS_pub_.publish(GNSS_message_);
 
       last_time_ = current_time;

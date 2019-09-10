@@ -74,7 +74,7 @@ namespace rosflight_plugins
 
     // Message with static info prefilled
     rosflight_msgs::GNSS GNSS_message_;
-    sensor_msgs::NavSatFix GNSS_fix_message_
+    sensor_msgs::NavSatFix GNSS_fix_message_;
     geometry_msgs::TwistStamped GNSS_vel_message_;
 
     // params
@@ -107,7 +107,7 @@ namespace rosflight_plugins
 
     void measure(double dpn, double dpe, double & dlat, double & dlon);
     inline double square(double a) {return a * a;}
-    inline double deg_to_rad(double deg) {return deg * M_PI / 180.0}
+    inline double deg_to_rad(double deg) {return deg * M_PI / 180.0;}
     double earth_radius(double latitude);
     void lla_to_ecef(double latitude, double longitude, double altitude, double &x, double &y, double &z);
 
