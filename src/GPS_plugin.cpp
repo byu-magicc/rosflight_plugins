@@ -16,7 +16,6 @@
 
 #include "rosflight_plugins/GPS_plugin.h"
 #include "rosflight_plugins/gz_compat.h"
-#include <sensor_msgs/NavSatStatus.h>
 
 namespace rosflight_plugins
 {
@@ -80,9 +79,7 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   // load params from rosparam server
   int numSat;
   noise_on_ = nh_private_.param<bool>("noise_on", true);
-  GNSS_topic_ = nh_private_.param<std::string>("topic", "gps");
-  GNSS_fix_topic_ = nh_private_.param<std::string>("fix_topic", "navsat_compat/fix");
-  GNSS_vel_topic_ = nh_private_.param<std::string>("vel_topic", "navsat_compat/vel");
+  GPS_topic_ = nh_private_.param<std::string>("topic", "gps");
   north_stdev_ = nh_private_.param<double>("north_stdev", 0.21);
   east_stdev_ = nh_private_.param<double>("east_stdev", 0.21);
   alt_stdev_ = nh_private_.param<double>("alt_stdev", 0.40);
@@ -96,10 +93,7 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   numSat = nh_private_.param<int>("num_sats", 7);
 
   // ROS Publishers
-  GNSS_pub_ = nh_.advertise<rosflight_msgs::GNSS>(GNSS_topic_, 1);
-  GNSS_fix_pub_ = nh_.advertise<sensor_msgs::NavSatFix>(GNSS_fix_topic_, 1);
-  GNSS_vel_pub_ = nh_.advertise<geometry_msgs::TwistStamped>(GNSS_vel_topic_, 1);
-
+  GPS_pub_ = nh_.advertise<rosflight_msgs::GPS>(GPS_topic_, 1);
 
   // Calculate sample time from sensor update rate
   sample_time_ = 1.0/pub_rate_;
@@ -120,10 +114,9 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   }
 
   // Fill static members of GPS message.
-  //TODO update this to newest GNSS message standard
-  GNSS_message_.header.frame_id = link_name_;
-  GNSS_message_.fix = true;
-  GNSS_message_.NumSat = numSat;
+  GPS_message_.header.frame_id = link_name_;
+  GPS_message_.fix = true;
+  GPS_message_.NumSat = numSat;
 
   // initialize GPS error to zero
   north_GPS_error_ = 0.0;
@@ -160,11 +153,11 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       // Convert meters to GPS angle
       double dlat, dlon;
       measure(pn, pe, dlat, dlon);
-      double latitude_deg = initial_latitude_ + dlat * 180.0/M_PI;
-      double longitude_deg = initial_longitude_ + dlon * 180.0/M_PI;
+      GPS_message_.latitude = initial_latitude_ + dlat * 180.0/M_PI;
+      GPS_message_.longitude = initial_longitude_ + dlon * 180.0/M_PI;
 
       // Altitude
-      double altitude = initial_altitude_ + h;
+      GPS_message_.altitude = initial_altitude_ + h;
 
       // Get Ground Speed
       GazeboVector C_linear_velocity_W_C = GZ_COMPAT_GET_RELATIVE_LINEAR_VEL(link_);
@@ -173,7 +166,7 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       double Vg = sqrt(u*u + v*v);
       double sigma_vg = sqrt((u*u*north_stdev_*north_stdev_ + v*v*east_stdev_*east_stdev_)/(u*u + v*v));
       double ground_speed_error = sigma_vg*standard_normal_distribution_(random_generator_);
-      double ground_speed = Vg + ground_speed_error;
+      GPS_message_.speed = Vg + ground_speed_error;
 
       // Get Course Angle
       double psi = -GZ_COMPAT_GET_Z( GZ_COMPAT_GET_EULER( GZ_COMPAT_GET_ROT( W_pose_W_C)));
@@ -182,33 +175,11 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       double chi = atan2(dy,dx);
       double sigma_chi = sqrt((dx*dx*north_stdev_*north_stdev_ + dy*dy*east_stdev_*east_stdev_)/((dx*dx+dy*dy)*(dx*dx+dy*dy)));
       double chi_error = sigma_chi*standard_normal_distribution_(random_generator_);
-      double ground_course = chi + chi_error;
-
-      //Calculate other values for messages
-      double ecef_x, ecef_y, ecef_z;
-      lla_to_ecef(latitude_deg, longitude_deg, altitude, ecef_x, ecef_y, ecef_z);
-
-      //Fill the GNSS message
-      GNSS_message_.position[0] = ecef_x;
-      GNSS_message_.position[1] = ecef_y;
-      GNSS_message_.position[2] = ecef_z;
-      //TODO finish GNSS message fields
-
-      //Fill the NavSatFix message
-      GNSS_fix_message_.latitude = latitude_deg;
-      GNSS_fix_message_.longitude = longitude_deg;
-      GNSS_fix_message_.altitude = altitude;
-      GNSS_fix_message_.status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
-      GNSS_fix_message_.status.status = sensor_msgs::NavSatStatus::STATUS_FIX;
-      //TODO NavSatFix covariance
-
-      //Fill the TwistStamped
-      //TODO fill the TwistStamped
+      GPS_message_.ground_course = chi + chi_error;
 
       // Publish
-      //TODO publish all messages
-      GNSS_message_.header.stamp.fromSec(GZ_COMPAT_GET_SIM_TIME(world_).Double());
-      GNSS_pub_.publish(GNSS_message_);
+      GPS_message_.header.stamp.fromSec(GZ_COMPAT_GET_SIM_TIME(world_).Double());
+      GPS_pub_.publish(GPS_message_);
 
       last_time_ = current_time;
   }
@@ -225,28 +196,6 @@ void GPSPlugin::measure(double dpn, double dpe, double& dlat, double& dlon)
   dlat = asin(dpn/R);
   dlon = asin(dpe/(R*cos(initial_latitude_*M_PI/180.0)));
 }
-//Distance from the center of earth to the surface at a particular latitude, using WGS84
-//latitude in degrees
-double GPSPlugin::earth_radius(double latitude)
-{
-  latitude = latitude / 180 * M_PI;
-  //Equation from https://en.wikipedia.org/wiki/Earth_radius#Location-dependent_radii
-  return sqrt((square(square(equatorial_radius) * cos(latitude)) + square(square(polar_radius) * sin(latitude))) /
-              (square(equatorial_radius*cos(latitude)) + square(polar_radius*latitude)));
-}
-//Angles in degrees, altitude in m above MSL per WGS84
-  void GPSPlugin::lla_to_ecef(double latitude, double longitude, double altitude, double &x, double &y, double &z) {
-    //Is there not a library function for this?
-    latitude = deg_to_rad(latitude);
-    longitude = deg_to_rad(longitude);
-    double geocentric_latitude = atan(
-        equatorial_radius / polar_radius * tan(latitude)); // possibly a more efficent way to do this
-    double radius = earth_radius(latitude);
-    z = radius * sin(geocentric_latitude);
-    double flat_radius = radius * cos(geocentric_latitude);
-    y = flat_radius * sin(longitude);
-    x = flat_radius * cos(longitude);
-  }
 
 
 GZ_REGISTER_MODEL_PLUGIN(GPSPlugin);
