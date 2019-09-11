@@ -195,7 +195,7 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       GNSS_message_.position[0] = ecef_x;
       GNSS_message_.position[1] = ecef_y;
       GNSS_message_.position[2] = ecef_z;
-      //TODO GNSS message velocity and accuracies
+      //TODO GNSS message velocity
       GNSS_message_.speed_accuracy = sigma_vg;
       GNSS_message_.vertical_accuracy = alt_GPS_error_;
       GNSS_message_.horizontal_accuracy = north_GPS_error_ > east_GPS_error_ ? north_GPS_error_ : east_GPS_error_;
@@ -208,12 +208,17 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 
       //Fill the TwistStamped
       //TODO fill the TwistStamped
+      GNSS_vel_message_.twist.linear.x = ground_speed * cos(ground_course);
+      GNSS_vel_message_.twist.linear.y = ground_speed * sin(ground_course);
+      GNSS_vel_message_.twist.linear.z = 0;
 
       // Publish
       //TODO publish all messages
       GNSS_message_.header.stamp.fromSec(GZ_COMPAT_GET_SIM_TIME(world_).Double());
       GNSS_vel_message_.header.stamp = GNSS_message_.header.stamp;
       GNSS_pub_.publish(GNSS_message_);
+      GNSS_fix_pub_.publish(GNSS_fix_message_);
+      GNSS_vel_pub_.publish(GNSS_vel_message_);
 
       last_time_ = current_time;
   }
