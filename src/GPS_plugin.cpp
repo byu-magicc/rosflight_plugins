@@ -120,7 +120,6 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   }
 
   // Fill static members of GPS message.
-  //TODO update this to newest GNSS message standard
   GNSS_message_.header.frame_id = link_name_;
   //TODO add constants for UBX fix types
   GNSS_message_.fix = 3; // corresponds to a 3D fix
@@ -188,34 +187,49 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       double ground_course = chi + chi_error;
 
       //Calculate other values for messages
-      double ecef_x, ecef_y, ecef_z;
-      lla_to_ecef(latitude_deg, longitude_deg, altitude, ecef_x, ecef_y, ecef_z);
+      GazeboAngle lat_angle(deg_to_rad(initial_latitude_));
+      GazeboAngle lon_angle(deg_to_rad(initial_longitude_));
+      gazebo::common::SphericalCoordinates spherical_coordinates(
+          gazebo::common::SphericalCoordinates::SurfaceType::EARTH_WGS84, lat_angle, lon_angle, initial_altitude_,
+          GazeboAngle::Zero);
+      GazeboVector gazebo_position = GZ_COMPAT_GET_POS(GZ_COMPAT_GET_WORLD_COG_POSE(link_));
+      GazeboVector ecef_position = spherical_coordinates.PositionTransform(gazebo_position,
+                                                                           gazebo::common::SphericalCoordinates::CoordinateType::LOCAL,
+                                                                           gazebo::common::SphericalCoordinates::CoordinateType::ECEF);
+      GazeboVector ecef_velocity = spherical_coordinates.VelocityTransform(C_linear_velocity_W_C,
+                                                                           gazebo::common::SphericalCoordinates::CoordinateType::GLOBAL,
+                                                                           gazebo::common::SphericalCoordinates::CoordinateType::ECEF);
 
       //Fill the GNSS message
-      GNSS_message_.position[0] = ecef_x;
-      GNSS_message_.position[1] = ecef_y;
-      GNSS_message_.position[2] = ecef_z;
-      //TODO GNSS message velocity
+      GNSS_message_.position[0] = GZ_COMPAT_GET_X(ecef_position);
+      GNSS_message_.position[1] = GZ_COMPAT_GET_Y(ecef_position);
+      GNSS_message_.position[2] = GZ_COMPAT_GET_Z(ecef_position);
       GNSS_message_.speed_accuracy = sigma_vg;
-      GNSS_message_.vertical_accuracy = alt_GPS_error_;
-      GNSS_message_.horizontal_accuracy = north_GPS_error_ > east_GPS_error_ ? north_GPS_error_ : east_GPS_error_;
+      GNSS_message_.vertical_accuracy = alt_stdev_;
+      GNSS_message_.horizontal_accuracy = north_stdev_ > east_stdev_ ? north_stdev_ : east_stdev_;
+      GNSS_message_.velocity[0] = GZ_COMPAT_GET_X(ecef_velocity);
+      GNSS_message_.velocity[1] = GZ_COMPAT_GET_Y(ecef_velocity);
+      GNSS_message_.velocity[2] = GZ_COMPAT_GET_Z(ecef_velocity);
 
       //Fill the NavSatFix message
       GNSS_fix_message_.latitude = latitude_deg;
       GNSS_fix_message_.longitude = longitude_deg;
       GNSS_fix_message_.altitude = altitude;
-      //TODO NavSatFix covariance
+      GNSS_fix_message_.position_covariance[0] = north_stdev_;
+      GNSS_fix_message_.position_covariance[4] = east_stdev_;
+      GNSS_fix_message_.position_covariance[8] = alt_stdev_;
+      GNSS_fix_message_.position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
 
       //Fill the TwistStamped
-      //TODO fill the TwistStamped
       GNSS_vel_message_.twist.linear.x = ground_speed * cos(ground_course);
       GNSS_vel_message_.twist.linear.y = ground_speed * sin(ground_course);
+      //TODO vertical speed
       GNSS_vel_message_.twist.linear.z = 0;
 
       // Publish
-      //TODO publish all messages
       GNSS_message_.header.stamp.fromSec(GZ_COMPAT_GET_SIM_TIME(world_).Double());
       GNSS_vel_message_.header.stamp = GNSS_message_.header.stamp;
+      GNSS_fix_message_.header.stamp = GNSS_message_.header.stamp;
       GNSS_pub_.publish(GNSS_message_);
       GNSS_fix_pub_.publish(GNSS_fix_message_);
       GNSS_vel_pub_.publish(GNSS_vel_message_);
@@ -257,7 +271,6 @@ double GPSPlugin::earth_radius(double latitude)
     y = flat_radius * sin(longitude);
     x = flat_radius * cos(longitude);
   }
-
 
 GZ_REGISTER_MODEL_PLUGIN(GPSPlugin);
 }

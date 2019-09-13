@@ -39,6 +39,7 @@
 using GazeboVector = ignition::math::Vector3d;
 using GazeboPose = ignition::math::Pose3d;
 using GazeboQuaternion = ignition::math::Quaterniond;
+using GazeboAngle = ignition::math::Angle;
 
 #define GZ_COMPAT_GET_X(VECTOR) (VECTOR).X()
 #define GZ_COMPAT_GET_Y(VECTOR) (VECTOR).Y()
@@ -69,6 +70,7 @@ using GazeboQuaternion = ignition::math::Quaterniond;
 using GazeboVector = gazebo::math::Vector3;
 using GazeboPose = gazebo::math::Pose;
 using GazeboQuaternion = gazebo::math::Quaternion;
+using GazeboAngle = gazebo::math::Angle;
 
 #define GZ_COMPAT_GET_X(VECTOR) (VECTOR).x
 #define GZ_COMPAT_GET_Y(VECTOR) (VECTOR).y
