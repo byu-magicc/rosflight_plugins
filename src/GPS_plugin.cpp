@@ -184,7 +184,7 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       double chi = atan2(dy,dx);
       double sigma_chi = sqrt((dx*dx*north_stdev_*north_stdev_ + dy*dy*east_stdev_*east_stdev_)/((dx*dx+dy*dy)*(dx*dx+dy*dy)));
       double chi_error = sigma_chi*standard_normal_distribution_(random_generator_);
-      double ground_course = chi + chi_error;
+      double ground_course_rad = chi + chi_error;
 
       //Calculate other values for messages
       GazeboAngle lat_angle(deg_to_rad(initial_latitude_));
@@ -192,9 +192,10 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       gazebo::common::SphericalCoordinates spherical_coordinates(
           gazebo::common::SphericalCoordinates::SurfaceType::EARTH_WGS84, lat_angle, lon_angle, initial_altitude_,
           GazeboAngle::Zero);
-      GazeboVector gazebo_position = GZ_COMPAT_GET_POS(GZ_COMPAT_GET_WORLD_COG_POSE(link_));
-      GazeboVector ecef_position = spherical_coordinates.PositionTransform(gazebo_position,
-                                                                           gazebo::common::SphericalCoordinates::CoordinateType::LOCAL,
+      GazeboVector position_with_error(deg_to_rad(latitude_deg), deg_to_rad(longitude_deg), altitude);
+      GazeboVector velocity_with_error(ground_speed*cos(ground_course_rad), ground_speed*sin(ground_course_rad), 0);
+      GazeboVector ecef_position = spherical_coordinates.PositionTransform(position_with_error,
+                                                                           gazebo::common::SphericalCoordinates::CoordinateType::SPHERICAL,
                                                                            gazebo::common::SphericalCoordinates::CoordinateType::ECEF);
       GazeboVector ecef_velocity = spherical_coordinates.VelocityTransform(C_linear_velocity_W_C,
                                                                            gazebo::common::SphericalCoordinates::CoordinateType::GLOBAL,
@@ -221,15 +222,18 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       GNSS_fix_message_.position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
 
       //Fill the TwistStamped
-      GNSS_vel_message_.twist.linear.x = ground_speed * cos(ground_course);
-      GNSS_vel_message_.twist.linear.y = ground_speed * sin(ground_course);
-      //TODO vertical speed
+      GNSS_vel_message_.twist.linear.x = ground_speed * cos(ground_course_rad);
+      GNSS_vel_message_.twist.linear.y = ground_speed * sin(ground_course_rad);
+      //Apparently GPS units don't report vertical speed?
       GNSS_vel_message_.twist.linear.z = 0;
 
-      // Publish
+      //Time stamps
       GNSS_message_.header.stamp.fromSec(GZ_COMPAT_GET_SIM_TIME(world_).Double());
+      GNSS_message_.time = GNSS_message_.header.stamp;
       GNSS_vel_message_.header.stamp = GNSS_message_.header.stamp;
       GNSS_fix_message_.header.stamp = GNSS_message_.header.stamp;
+
+      // Publish
       GNSS_pub_.publish(GNSS_message_);
       GNSS_fix_pub_.publish(GNSS_fix_message_);
       GNSS_vel_pub_.publish(GNSS_vel_message_);
