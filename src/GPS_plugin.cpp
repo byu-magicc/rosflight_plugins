@@ -80,9 +80,9 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   // load params from rosparam server
   int numSat;
   noise_on_ = nh_private_.param<bool>("noise_on", true);
-  GNSS_topic_ = nh_private_.param<std::string>("topic", "gps");
-  GNSS_fix_topic_ = nh_private_.param<std::string>("fix_topic", "navsat_compat/fix");
-  GNSS_vel_topic_ = nh_private_.param<std::string>("vel_topic", "navsat_compat/vel");
+  gnss_topic_ = nh_private_.param<std::string>("topic", "gnss");
+  gnss_fix_topic_ = nh_private_.param<std::string>("fix_topic", "navsat_compat/fix");
+  gnss_vel_topic_ = nh_private_.param<std::string>("vel_topic", "navsat_compat/vel");
   north_stdev_ = nh_private_.param<double>("north_stdev", 0.21);
   east_stdev_ = nh_private_.param<double>("east_stdev", 0.21);
   alt_stdev_ = nh_private_.param<double>("alt_stdev", 0.40);
@@ -96,9 +96,9 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   numSat = nh_private_.param<int>("num_sats", 7);
 
   // ROS Publishers
-  GNSS_pub_ = nh_.advertise<rosflight_msgs::GNSS>(GNSS_topic_, 1);
-  GNSS_fix_pub_ = nh_.advertise<sensor_msgs::NavSatFix>(GNSS_fix_topic_, 1);
-  GNSS_vel_pub_ = nh_.advertise<geometry_msgs::TwistStamped>(GNSS_vel_topic_, 1);
+  GNSS_pub_ = nh_.advertise<rosflight_msgs::GNSS>(gnss_topic_, 1);
+  GNSS_fix_pub_ = nh_.advertise<sensor_msgs::NavSatFix>(gnss_fix_topic_, 1);
+  GNSS_vel_pub_ = nh_.advertise<geometry_msgs::TwistStamped>(gnss_vel_topic_, 1);
 
 
   // Calculate sample time from sensor update rate
@@ -120,12 +120,12 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   }
 
   // Fill static members of GPS message.
-  GNSS_message_.header.frame_id = link_name_;
+  gnss_message_.header.frame_id = link_name_;
   //TODO add constants for UBX fix types
-  GNSS_message_.fix = 3; // corresponds to a 3D fix
+  gnss_message_.fix = 3; // corresponds to a 3D fix
 
-  GNSS_fix_message_.status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
-  GNSS_fix_message_.status.status = sensor_msgs::NavSatStatus::STATUS_FIX;
+  gnss_fix_message_.status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
+  gnss_fix_message_.status.status = sensor_msgs::NavSatStatus::STATUS_FIX;
 
   // initialize GPS error to zero
   north_GPS_error_ = 0.0;
@@ -202,41 +202,41 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
                                                                            gazebo::common::SphericalCoordinates::CoordinateType::ECEF);
 
       //Fill the GNSS message
-      GNSS_message_.position[0] = GZ_COMPAT_GET_X(ecef_position);
-      GNSS_message_.position[1] = GZ_COMPAT_GET_Y(ecef_position);
-      GNSS_message_.position[2] = GZ_COMPAT_GET_Z(ecef_position);
-      GNSS_message_.speed_accuracy = sigma_vg;
-      GNSS_message_.vertical_accuracy = alt_stdev_;
-      GNSS_message_.horizontal_accuracy = north_stdev_ > east_stdev_ ? north_stdev_ : east_stdev_;
-      GNSS_message_.velocity[0] = GZ_COMPAT_GET_X(ecef_velocity);
-      GNSS_message_.velocity[1] = GZ_COMPAT_GET_Y(ecef_velocity);
-      GNSS_message_.velocity[2] = GZ_COMPAT_GET_Z(ecef_velocity);
+      gnss_message_.position[0] = GZ_COMPAT_GET_X(ecef_position);
+      gnss_message_.position[1] = GZ_COMPAT_GET_Y(ecef_position);
+      gnss_message_.position[2] = GZ_COMPAT_GET_Z(ecef_position);
+      gnss_message_.speed_accuracy = sigma_vg;
+      gnss_message_.vertical_accuracy = alt_stdev_;
+      gnss_message_.horizontal_accuracy = north_stdev_ > east_stdev_ ? north_stdev_ : east_stdev_;
+      gnss_message_.velocity[0] = GZ_COMPAT_GET_X(ecef_velocity);
+      gnss_message_.velocity[1] = GZ_COMPAT_GET_Y(ecef_velocity);
+      gnss_message_.velocity[2] = GZ_COMPAT_GET_Z(ecef_velocity);
 
       //Fill the NavSatFix message
-      GNSS_fix_message_.latitude = latitude_deg;
-      GNSS_fix_message_.longitude = longitude_deg;
-      GNSS_fix_message_.altitude = altitude;
-      GNSS_fix_message_.position_covariance[0] = north_stdev_;
-      GNSS_fix_message_.position_covariance[4] = east_stdev_;
-      GNSS_fix_message_.position_covariance[8] = alt_stdev_;
-      GNSS_fix_message_.position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
+      gnss_fix_message_.latitude = latitude_deg;
+      gnss_fix_message_.longitude = longitude_deg;
+      gnss_fix_message_.altitude = altitude;
+      gnss_fix_message_.position_covariance[0] = north_stdev_;
+      gnss_fix_message_.position_covariance[4] = east_stdev_;
+      gnss_fix_message_.position_covariance[8] = alt_stdev_;
+      gnss_fix_message_.position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
 
       //Fill the TwistStamped
-      GNSS_vel_message_.twist.linear.x = ground_speed * cos(ground_course_rad);
-      GNSS_vel_message_.twist.linear.y = ground_speed * sin(ground_course_rad);
+      gnss_vel_message_.twist.linear.x = ground_speed * cos(ground_course_rad);
+      gnss_vel_message_.twist.linear.y = ground_speed * sin(ground_course_rad);
       //Apparently GPS units don't report vertical speed?
-      GNSS_vel_message_.twist.linear.z = 0;
+      gnss_vel_message_.twist.linear.z = 0;
 
       //Time stamps
-      GNSS_message_.header.stamp.fromSec(GZ_COMPAT_GET_SIM_TIME(world_).Double());
-      GNSS_message_.time = GNSS_message_.header.stamp;
-      GNSS_vel_message_.header.stamp = GNSS_message_.header.stamp;
-      GNSS_fix_message_.header.stamp = GNSS_message_.header.stamp;
+      gnss_message_.header.stamp.fromSec(GZ_COMPAT_GET_SIM_TIME(world_).Double());
+      gnss_message_.time = gnss_message_.header.stamp;
+      gnss_vel_message_.header.stamp = gnss_message_.header.stamp;
+      gnss_fix_message_.header.stamp = gnss_message_.header.stamp;
 
       // Publish
-      GNSS_pub_.publish(GNSS_message_);
-      GNSS_fix_pub_.publish(GNSS_fix_message_);
-      GNSS_vel_pub_.publish(GNSS_vel_message_);
+      GNSS_pub_.publish(gnss_message_);
+      GNSS_fix_pub_.publish(gnss_fix_message_);
+      GNSS_vel_pub_.publish(gnss_vel_message_);
 
       last_time_ = current_time;
   }
@@ -253,28 +253,6 @@ void GPSPlugin::measure(double dpn, double dpe, double& dlat, double& dlon)
   dlat = asin(dpn/R);
   dlon = asin(dpe/(R*cos(initial_latitude_*M_PI/180.0)));
 }
-//Distance from the center of earth to the surface at a particular latitude, using WGS84
-//latitude in degrees
-double GPSPlugin::earth_radius(double latitude)
-{
-  latitude = latitude / 180 * M_PI;
-  //Equation from https://en.wikipedia.org/wiki/Earth_radius#Location-dependent_radii
-  return sqrt((square(square(equatorial_radius) * cos(latitude)) + square(square(polar_radius) * sin(latitude))) /
-              (square(equatorial_radius*cos(latitude)) + square(polar_radius*latitude)));
-}
-//Angles in degrees, altitude in m above MSL per WGS84
-  void GPSPlugin::lla_to_ecef(double latitude, double longitude, double altitude, double &x, double &y, double &z) {
-    //Is there not a library function for this?
-    latitude = deg_to_rad(latitude);
-    longitude = deg_to_rad(longitude);
-    double geocentric_latitude = atan(
-        equatorial_radius / polar_radius * tan(latitude)); // possibly a more efficent way to do this
-    double radius = earth_radius(latitude);
-    z = radius * sin(geocentric_latitude);
-    double flat_radius = radius * cos(geocentric_latitude);
-    y = flat_radius * sin(longitude);
-    x = flat_radius * cos(longitude);
-  }
 
 GZ_REGISTER_MODEL_PLUGIN(GPSPlugin);
 }
