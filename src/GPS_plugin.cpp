@@ -192,12 +192,12 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       gazebo::common::SphericalCoordinates spherical_coordinates(
           gazebo::common::SphericalCoordinates::SurfaceType::EARTH_WGS84, lat_angle, lon_angle, initial_altitude_,
           ignition::math::Angle::Zero);
-      ignition::math::Vector3d position_with_error(deg_to_rad(latitude_deg), deg_to_rad(longitude_deg), altitude);
+      ignition::math::Vector3d lla_position_with_error(deg_to_rad(latitude_deg), deg_to_rad(longitude_deg), altitude);
       ignition::math::Vector3d velocity_with_error(ground_speed*cos(ground_course_rad), ground_speed*sin(ground_course_rad), 0);
-      ignition::math::Vector3d ecef_position = spherical_coordinates.PositionTransform(position_with_error,
+      ignition::math::Vector3d ecef_position = spherical_coordinates.PositionTransform(lla_position_with_error,
                                                                            gazebo::common::SphericalCoordinates::CoordinateType::SPHERICAL,
                                                                            gazebo::common::SphericalCoordinates::CoordinateType::ECEF);
-      ignition::math::Vector3d ecef_velocity = spherical_coordinates.VelocityTransform(C_linear_velocity_W_C,
+      ignition::math::Vector3d ecef_velocity = spherical_coordinates.VelocityTransform(velocity_with_error,
                                                                            gazebo::common::SphericalCoordinates::CoordinateType::GLOBAL,
                                                                            gazebo::common::SphericalCoordinates::CoordinateType::ECEF);
 
