@@ -169,9 +169,9 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       double altitude = initial_altitude_ + h;
 
       // Get Ground Speed
-      GazeboVector C_linear_velocity_W_C = GZ_COMPAT_GET_RELATIVE_LINEAR_VEL(link_);
-      double u = GZ_COMPAT_GET_X(C_linear_velocity_W_C);
-      double v = -GZ_COMPAT_GET_Y(C_linear_velocity_W_C);
+      ignition::math::Vector3d C_linear_velocity_W_C = GZ_COMPAT_IGN_VECTOR(GZ_COMPAT_GET_RELATIVE_LINEAR_VEL(link_));
+      double u = C_linear_velocity_W_C.X();
+      double v = -C_linear_velocity_W_C.Y();
       double Vg = sqrt(u*u + v*v);
       double sigma_vg = sqrt((u*u*north_stdev_*north_stdev_ + v*v*east_stdev_*east_stdev_)/(u*u + v*v));
       double ground_speed_error = sigma_vg*standard_normal_distribution_(random_generator_);
@@ -187,30 +187,30 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       double ground_course_rad = chi + chi_error;
 
       //Calculate other values for messages
-      GazeboAngle lat_angle(deg_to_rad(initial_latitude_));
-      GazeboAngle lon_angle(deg_to_rad(initial_longitude_));
+      ignition::math::Angle lat_angle(deg_to_rad(initial_latitude_));
+      ignition::math::Angle lon_angle(deg_to_rad(initial_longitude_));
       gazebo::common::SphericalCoordinates spherical_coordinates(
           gazebo::common::SphericalCoordinates::SurfaceType::EARTH_WGS84, lat_angle, lon_angle, initial_altitude_,
-          GazeboAngle::Zero);
-      GazeboVector position_with_error(deg_to_rad(latitude_deg), deg_to_rad(longitude_deg), altitude);
-      GazeboVector velocity_with_error(ground_speed*cos(ground_course_rad), ground_speed*sin(ground_course_rad), 0);
-      GazeboVector ecef_position = spherical_coordinates.PositionTransform(position_with_error,
+          ignition::math::Angle::Zero);
+      ignition::math::Vector3d position_with_error(deg_to_rad(latitude_deg), deg_to_rad(longitude_deg), altitude);
+      ignition::math::Vector3d velocity_with_error(ground_speed*cos(ground_course_rad), ground_speed*sin(ground_course_rad), 0);
+      ignition::math::Vector3d ecef_position = spherical_coordinates.PositionTransform(position_with_error,
                                                                            gazebo::common::SphericalCoordinates::CoordinateType::SPHERICAL,
                                                                            gazebo::common::SphericalCoordinates::CoordinateType::ECEF);
-      GazeboVector ecef_velocity = spherical_coordinates.VelocityTransform(C_linear_velocity_W_C,
+      ignition::math::Vector3d ecef_velocity = spherical_coordinates.VelocityTransform(C_linear_velocity_W_C,
                                                                            gazebo::common::SphericalCoordinates::CoordinateType::GLOBAL,
                                                                            gazebo::common::SphericalCoordinates::CoordinateType::ECEF);
 
       //Fill the GNSS message
-      gnss_message_.position[0] = GZ_COMPAT_GET_X(ecef_position);
-      gnss_message_.position[1] = GZ_COMPAT_GET_Y(ecef_position);
-      gnss_message_.position[2] = GZ_COMPAT_GET_Z(ecef_position);
+      gnss_message_.position[0] = ecef_position.X();
+      gnss_message_.position[1] = ecef_position.Y();
+      gnss_message_.position[2] = ecef_position.Z();
       gnss_message_.speed_accuracy = sigma_vg;
       gnss_message_.vertical_accuracy = alt_stdev_;
       gnss_message_.horizontal_accuracy = north_stdev_ > east_stdev_ ? north_stdev_ : east_stdev_;
-      gnss_message_.velocity[0] = GZ_COMPAT_GET_X(ecef_velocity);
-      gnss_message_.velocity[1] = GZ_COMPAT_GET_Y(ecef_velocity);
-      gnss_message_.velocity[2] = GZ_COMPAT_GET_Z(ecef_velocity);
+      gnss_message_.velocity[0] = ecef_velocity.X();
+      gnss_message_.velocity[1] = ecef_velocity.Y();
+      gnss_message_.velocity[2] = ecef_velocity.Z();
 
       //Fill the NavSatFix message
       gnss_fix_message_.latitude = latitude_deg;
