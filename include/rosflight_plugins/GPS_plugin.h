@@ -29,7 +29,9 @@
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
 
-#include <rosflight_msgs/GPS.h>
+#include <rosflight_msgs/GNSS.h>
+#include <sensor_msgs/NavSatFix.h>
+#include <geometry_msgs/TwistStamped.h>
 
 namespace rosflight_plugins 
 {
@@ -49,7 +51,9 @@ namespace rosflight_plugins
     std::string namespace_;
     ros::NodeHandle nh_;
     ros::NodeHandle nh_private_;
-    ros::Publisher GPS_pub_;
+    ros::Publisher GNSS_pub_;
+    ros::Publisher GNSS_fix_pub_;
+    ros::Publisher GNSS_vel_pub_;
 
     // Gazebo connections
     std::string link_name_;
@@ -64,10 +68,14 @@ namespace rosflight_plugins
     std::normal_distribution<double> standard_normal_distribution_;
 
     // Topic
-    std::string GPS_topic_;
+    std::string gnss_topic_;
+    std::string gnss_vel_topic_;
+    std::string gnss_fix_topic_;
 
     // Message with static info prefilled
-    rosflight_msgs::GPS GPS_message_;
+    rosflight_msgs::GNSS gnss_message_;
+    sensor_msgs::NavSatFix gnss_fix_message_;
+    geometry_msgs::TwistStamped gnss_vel_message_;
 
     // params
     double pub_rate_;
@@ -94,6 +102,7 @@ namespace rosflight_plugins
     double sample_time_;
 
     void measure(double dpn, double dpe, double & dlat, double & dlon);
+    inline double deg_to_rad(double deg) {return deg * M_PI / 180.0;}
 
   };
 }

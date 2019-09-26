@@ -16,6 +16,7 @@
 
 #include "rosflight_plugins/GPS_plugin.h"
 #include "rosflight_plugins/gz_compat.h"
+#include <sensor_msgs/NavSatStatus.h>
 
 namespace rosflight_plugins
 {
@@ -79,7 +80,9 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   // load params from rosparam server
   int numSat;
   noise_on_ = nh_private_.param<bool>("noise_on", true);
-  GPS_topic_ = nh_private_.param<std::string>("topic", "gps");
+  gnss_topic_ = nh_private_.param<std::string>("topic", "gnss");
+  gnss_fix_topic_ = nh_private_.param<std::string>("fix_topic", "navsat_compat/fix");
+  gnss_vel_topic_ = nh_private_.param<std::string>("vel_topic", "navsat_compat/vel");
   north_stdev_ = nh_private_.param<double>("north_stdev", 0.21);
   east_stdev_ = nh_private_.param<double>("east_stdev", 0.21);
   alt_stdev_ = nh_private_.param<double>("alt_stdev", 0.40);
@@ -93,7 +96,10 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   numSat = nh_private_.param<int>("num_sats", 7);
 
   // ROS Publishers
-  GPS_pub_ = nh_.advertise<rosflight_msgs::GPS>(GPS_topic_, 1);
+  GNSS_pub_ = nh_.advertise<rosflight_msgs::GNSS>(gnss_topic_, 1);
+  GNSS_fix_pub_ = nh_.advertise<sensor_msgs::NavSatFix>(gnss_fix_topic_, 1);
+  GNSS_vel_pub_ = nh_.advertise<geometry_msgs::TwistStamped>(gnss_vel_topic_, 1);
+
 
   // Calculate sample time from sensor update rate
   sample_time_ = 1.0/pub_rate_;
@@ -114,9 +120,12 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   }
 
   // Fill static members of GPS message.
-  GPS_message_.header.frame_id = link_name_;
-  GPS_message_.fix = true;
-  GPS_message_.NumSat = numSat;
+  gnss_message_.header.frame_id = link_name_;
+  //TODO add constants for UBX fix types
+  gnss_message_.fix = 3; // corresponds to a 3D fix
+
+  gnss_fix_message_.status.service = sensor_msgs::NavSatStatus::SERVICE_GPS;
+  gnss_fix_message_.status.status = sensor_msgs::NavSatStatus::STATUS_FIX;
 
   // initialize GPS error to zero
   north_GPS_error_ = 0.0;
@@ -153,20 +162,20 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       // Convert meters to GPS angle
       double dlat, dlon;
       measure(pn, pe, dlat, dlon);
-      GPS_message_.latitude = initial_latitude_ + dlat * 180.0/M_PI;
-      GPS_message_.longitude = initial_longitude_ + dlon * 180.0/M_PI;
+      double latitude_deg = initial_latitude_ + dlat * 180.0/M_PI;
+      double longitude_deg = initial_longitude_ + dlon * 180.0/M_PI;
 
       // Altitude
-      GPS_message_.altitude = initial_altitude_ + h;
+      double altitude = initial_altitude_ + h;
 
       // Get Ground Speed
-      GazeboVector C_linear_velocity_W_C = GZ_COMPAT_GET_RELATIVE_LINEAR_VEL(link_);
-      double u = GZ_COMPAT_GET_X(C_linear_velocity_W_C);
-      double v = -GZ_COMPAT_GET_Y(C_linear_velocity_W_C);
+      ignition::math::Vector3d C_linear_velocity_W_C = GZ_COMPAT_IGN_VECTOR(GZ_COMPAT_GET_RELATIVE_LINEAR_VEL(link_));
+      double u = C_linear_velocity_W_C.X();
+      double v = -C_linear_velocity_W_C.Y();
       double Vg = sqrt(u*u + v*v);
       double sigma_vg = sqrt((u*u*north_stdev_*north_stdev_ + v*v*east_stdev_*east_stdev_)/(u*u + v*v));
       double ground_speed_error = sigma_vg*standard_normal_distribution_(random_generator_);
-      GPS_message_.speed = Vg + ground_speed_error;
+      double ground_speed = Vg + ground_speed_error;
 
       // Get Course Angle
       double psi = -GZ_COMPAT_GET_Z( GZ_COMPAT_GET_EULER( GZ_COMPAT_GET_ROT( W_pose_W_C)));
@@ -175,11 +184,59 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       double chi = atan2(dy,dx);
       double sigma_chi = sqrt((dx*dx*north_stdev_*north_stdev_ + dy*dy*east_stdev_*east_stdev_)/((dx*dx+dy*dy)*(dx*dx+dy*dy)));
       double chi_error = sigma_chi*standard_normal_distribution_(random_generator_);
-      GPS_message_.ground_course = chi + chi_error;
+      double ground_course_rad = chi + chi_error;
+
+      //Calculate other values for messages
+      ignition::math::Angle lat_angle(deg_to_rad(initial_latitude_));
+      ignition::math::Angle lon_angle(deg_to_rad(initial_longitude_));
+      gazebo::common::SphericalCoordinates spherical_coordinates(
+          gazebo::common::SphericalCoordinates::SurfaceType::EARTH_WGS84, lat_angle, lon_angle, initial_altitude_,
+          ignition::math::Angle::Zero);
+      ignition::math::Vector3d lla_position_with_error(deg_to_rad(latitude_deg), deg_to_rad(longitude_deg), altitude);
+      ignition::math::Vector3d velocity_with_error(ground_speed*cos(ground_course_rad), ground_speed*sin(ground_course_rad), 0);
+      ignition::math::Vector3d ecef_position = spherical_coordinates.PositionTransform(lla_position_with_error,
+                                                                           gazebo::common::SphericalCoordinates::CoordinateType::SPHERICAL,
+                                                                           gazebo::common::SphericalCoordinates::CoordinateType::ECEF);
+      ignition::math::Vector3d ecef_velocity = spherical_coordinates.VelocityTransform(velocity_with_error,
+                                                                           gazebo::common::SphericalCoordinates::CoordinateType::GLOBAL,
+                                                                           gazebo::common::SphericalCoordinates::CoordinateType::ECEF);
+
+      //Fill the GNSS message
+      gnss_message_.position[0] = ecef_position.X();
+      gnss_message_.position[1] = ecef_position.Y();
+      gnss_message_.position[2] = ecef_position.Z();
+      gnss_message_.speed_accuracy = sigma_vg;
+      gnss_message_.vertical_accuracy = alt_stdev_;
+      gnss_message_.horizontal_accuracy = north_stdev_ > east_stdev_ ? north_stdev_ : east_stdev_;
+      gnss_message_.velocity[0] = ecef_velocity.X();
+      gnss_message_.velocity[1] = ecef_velocity.Y();
+      gnss_message_.velocity[2] = ecef_velocity.Z();
+
+      //Fill the NavSatFix message
+      gnss_fix_message_.latitude = latitude_deg;
+      gnss_fix_message_.longitude = longitude_deg;
+      gnss_fix_message_.altitude = altitude;
+      gnss_fix_message_.position_covariance[0] = north_stdev_;
+      gnss_fix_message_.position_covariance[4] = east_stdev_;
+      gnss_fix_message_.position_covariance[8] = alt_stdev_;
+      gnss_fix_message_.position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
+
+      //Fill the TwistStamped
+      gnss_vel_message_.twist.linear.x = ground_speed * cos(ground_course_rad);
+      gnss_vel_message_.twist.linear.y = ground_speed * sin(ground_course_rad);
+      //Apparently GPS units don't report vertical speed?
+      gnss_vel_message_.twist.linear.z = 0;
+
+      //Time stamps
+      gnss_message_.header.stamp.fromSec(GZ_COMPAT_GET_SIM_TIME(world_).Double());
+      gnss_message_.time = gnss_message_.header.stamp;
+      gnss_vel_message_.header.stamp = gnss_message_.header.stamp;
+      gnss_fix_message_.header.stamp = gnss_message_.header.stamp;
 
       // Publish
-      GPS_message_.header.stamp.fromSec(GZ_COMPAT_GET_SIM_TIME(world_).Double());
-      GPS_pub_.publish(GPS_message_);
+      GNSS_pub_.publish(gnss_message_);
+      GNSS_fix_pub_.publish(gnss_fix_message_);
+      GNSS_vel_pub_.publish(gnss_vel_message_);
 
       last_time_ = current_time;
   }
@@ -196,7 +253,6 @@ void GPSPlugin::measure(double dpn, double dpe, double& dlat, double& dlon)
   dlat = asin(dpn/R);
   dlon = asin(dpe/(R*cos(initial_latitude_*M_PI/180.0)));
 }
-
 
 GZ_REGISTER_MODEL_PLUGIN(GPSPlugin);
 }

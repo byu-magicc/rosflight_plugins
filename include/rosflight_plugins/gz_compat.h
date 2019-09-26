@@ -39,6 +39,7 @@
 using GazeboVector = ignition::math::Vector3d;
 using GazeboPose = ignition::math::Pose3d;
 using GazeboQuaternion = ignition::math::Quaterniond;
+using GazeboAngle = ignition::math::Angle;
 
 #define GZ_COMPAT_GET_X(VECTOR) (VECTOR).X()
 #define GZ_COMPAT_GET_Y(VECTOR) (VECTOR).Y()
@@ -63,12 +64,14 @@ using GazeboQuaternion = ignition::math::Quaterniond;
 #define GZ_COMPAT_DISCONNECT_WORLD_UPDATE_BEGIN(CONNECTION) (CONNECTION).reset()
 #define GZ_COMPAT_GET_GRAVITY(WORLD_PTR) (WORLD_PTR)->Gravity()
 #define GZ_COMPAT_GET_MASS(INERTIAL_PTR) (INERTIAL_PTR)->Mass()
+#define GZ_COMPAT_IGN_VECTOR(VECTOR) (VECTOR)
 
 #else //I.E. GAZEBO_MAJOR_VERSION < 8
 
 using GazeboVector = gazebo::math::Vector3;
 using GazeboPose = gazebo::math::Pose;
 using GazeboQuaternion = gazebo::math::Quaternion;
+using GazeboAngle = gazebo::math::Angle;
 
 #define GZ_COMPAT_GET_X(VECTOR) (VECTOR).x
 #define GZ_COMPAT_GET_Y(VECTOR) (VECTOR).y
@@ -93,6 +96,7 @@ using GazeboQuaternion = gazebo::math::Quaternion;
 #define GZ_COMPAT_DISCONNECT_WORLD_UPDATE_BEGIN(CONNECTION) gazebo::event::Events::DisconnectWorldUpdateBegin((CONNECTION))
 #define GZ_COMPAT_GET_GRAVITY(WORLD_PTR) (WORLD_PTR)->GetPhysicsEngine()->GetGravity()
 #define GZ_COMPAT_GET_MASS(INERTIAL_PTR) (INERTIAL_PTR)->GetMass()
+#define GZ_COMPAT_IGN_VECTOR(VECTOR) (VECTOR).Ign()
 
 #endif //GAZEBO_MAJOR_VERSION >= 8
 
