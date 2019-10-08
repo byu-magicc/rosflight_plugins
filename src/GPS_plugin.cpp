@@ -86,6 +86,7 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
   north_stdev_ = nh_private_.param<double>("north_stdev", 0.21);
   east_stdev_ = nh_private_.param<double>("east_stdev", 0.21);
   alt_stdev_ = nh_private_.param<double>("alt_stdev", 0.40);
+  velocity_stdev_ = nh_private_.param<double>("velocity_stdev", 0.30);
   north_k_GPS_ = nh_private_.param<double>("k_north", 1.0/1100.0);
   east_k_GPS_ = nh_private_.param<double>("k_east", 1.0/1100.0);
   alt_k_GPS_ = nh_private_.param<double>("k_alt", 1.0/1100.0);
@@ -114,6 +115,7 @@ void GPSPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf)
     north_stdev_ = 0;
     east_stdev_ = 0;
     alt_stdev_ = 0;
+    velocity_stdev_ = 0;
     north_k_GPS_ = 0;
     east_k_GPS_ = 0;
     alt_k_GPS_ = 0;
@@ -169,7 +171,7 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       double altitude = initial_altitude_ + h;
 
       // Get Ground Speed
-      ignition::math::Vector3d C_linear_velocity_W_C = GZ_COMPAT_IGN_VECTOR(GZ_COMPAT_GET_RELATIVE_LINEAR_VEL(link_));
+      ignition::math::Vector3d C_linear_velocity_W_C = GZ_COMPAT_IGN_VECTOR(GZ_COMPAT_GET_WORLD_LINEAR_VEL(link_));
       double u = C_linear_velocity_W_C.X();
       double v = -C_linear_velocity_W_C.Y();
       double Vg = sqrt(u*u + v*v);
@@ -193,11 +195,17 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
           gazebo::common::SphericalCoordinates::SurfaceType::EARTH_WGS84, lat_angle, lon_angle, initial_altitude_,
           ignition::math::Angle::Zero);
       ignition::math::Vector3d lla_position_with_error(deg_to_rad(latitude_deg), deg_to_rad(longitude_deg), altitude);
-      ignition::math::Vector3d velocity_with_error(ground_speed*cos(ground_course_rad), ground_speed*sin(ground_course_rad), 0);
       ignition::math::Vector3d ecef_position = spherical_coordinates.PositionTransform(lla_position_with_error,
                                                                            gazebo::common::SphericalCoordinates::CoordinateType::SPHERICAL,
                                                                            gazebo::common::SphericalCoordinates::CoordinateType::ECEF);
-      ignition::math::Vector3d ecef_velocity = spherical_coordinates.VelocityTransform(velocity_with_error,
+
+      ignition::math::Vector3d nwu_vel = GZ_COMPAT_IGN_VECTOR(GZ_COMPAT_GET_WORLD_LINEAR_VEL(link_));
+      ignition::math::Vector3d enu_vel(-nwu_vel.Y(), nwu_vel.X(), nwu_vel.Z());
+      ignition::math::Vector3d enu_vel_with_noise;
+      enu_vel_with_noise.X() += velocity_stdev_ * standard_normal_distribution_(random_generator_);
+      enu_vel_with_noise.Y() += velocity_stdev_ * standard_normal_distribution_(random_generator_);
+      enu_vel_with_noise.Z() += velocity_stdev_ * standard_normal_distribution_(random_generator_);
+      ignition::math::Vector3d ecef_velocity = spherical_coordinates.VelocityTransform(enu_vel_with_noise,
                                                                            gazebo::common::SphericalCoordinates::CoordinateType::GLOBAL,
                                                                            gazebo::common::SphericalCoordinates::CoordinateType::ECEF);
 
