@@ -172,10 +172,13 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 
       // Get Ground Speed
       ignition::math::Vector3d C_linear_velocity_W_C = GZ_COMPAT_IGN_VECTOR(GZ_COMPAT_GET_WORLD_LINEAR_VEL(link_));
-      double u = C_linear_velocity_W_C.X();
-      double v = -C_linear_velocity_W_C.Y();
-      double Vg = sqrt(u*u + v*v);
-      double sigma_vg = sqrt((u*u*north_stdev_*north_stdev_ + v*v*east_stdev_*east_stdev_)/(u*u + v*v));
+      double north_vel = C_linear_velocity_W_C.X();
+      double east_vel = -C_linear_velocity_W_C.Y();
+      double Vg = sqrt(north_vel*north_vel + east_vel*east_vel);
+      double sigma_vg =
+          sqrt((north_vel * north_vel * north_stdev_ * north_stdev_ +
+                east_vel * east_vel * east_stdev_ * east_stdev_) /
+               (north_vel * north_vel + east_vel * east_vel));
       double ground_speed_error = sigma_vg*standard_normal_distribution_(random_generator_);
       double ground_speed = Vg + ground_speed_error;
 
