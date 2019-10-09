@@ -204,7 +204,7 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
 
       ignition::math::Vector3d nwu_vel = GZ_COMPAT_IGN_VECTOR(GZ_COMPAT_GET_WORLD_LINEAR_VEL(link_));
       ignition::math::Vector3d enu_vel(-nwu_vel.Y(), nwu_vel.X(), nwu_vel.Z());
-      ignition::math::Vector3d enu_vel_with_noise;
+      ignition::math::Vector3d enu_vel_with_noise = enu_vel;
       enu_vel_with_noise.X() += velocity_stdev_ * standard_normal_distribution_(random_generator_);
       enu_vel_with_noise.Y() += velocity_stdev_ * standard_normal_distribution_(random_generator_);
       enu_vel_with_noise.Z() += velocity_stdev_ * standard_normal_distribution_(random_generator_);
@@ -216,7 +216,7 @@ void GPSPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       gnss_message_.position[0] = ecef_position.X();
       gnss_message_.position[1] = ecef_position.Y();
       gnss_message_.position[2] = ecef_position.Z();
-      gnss_message_.speed_accuracy = sigma_vg;
+      gnss_message_.speed_accuracy = velocity_stdev_;
       gnss_message_.vertical_accuracy = alt_stdev_;
       gnss_message_.horizontal_accuracy = north_stdev_ > east_stdev_ ? north_stdev_ : east_stdev_;
       gnss_message_.velocity[0] = ecef_velocity.X();
