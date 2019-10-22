@@ -115,7 +115,7 @@ void BarometerPlugin::OnUpdate(const gazebo::common::UpdateInfo& _info)
       msg.altitude += standard_normal_distribution_(random_generator_);
 
     // Invert measurement model for pressure and temperature
-    msg.temperature = 25.0; // This is constant for simulation
+    msg.temperature = 25.0 + 273.15; // K, This is constant for simulation
     msg.pressure = 101325.0*pow(1- (2.25577e-5 * msg.altitude), 5.25588);
 
     // publish message

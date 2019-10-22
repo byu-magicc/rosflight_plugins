@@ -83,6 +83,7 @@ namespace rosflight_plugins
     double north_stdev_;
     double east_stdev_;
     double alt_stdev_;
+    double velocity_stdev_;
 
     double north_k_GPS_;
     double east_k_GPS_;
